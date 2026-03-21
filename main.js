@@ -15,17 +15,35 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Mobile Nav Toggle ──
   const toggle = document.getElementById('nav-toggle');
   const nav    = document.getElementById('main-nav');
+
   if (toggle && nav) {
     toggle.addEventListener('click', () => {
-      nav.classList.toggle('open');
-      toggle.classList.toggle('open');
+      const isOpen = nav.classList.toggle('open');
+      toggle.classList.toggle('open', isOpen);
+      // Prevent body scroll when menu is open
+      document.body.style.overflow = isOpen ? 'hidden' : '';
+      // Make sure header is always visible above drawer
+      if (header) header.style.zIndex = '10000';
     });
-    // Close on link click
+
+    // Close on any nav link click
     nav.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         nav.classList.remove('open');
         toggle.classList.remove('open');
+        document.body.style.overflow = '';
       });
+    });
+
+    // Close on backdrop tap (outside the nav area)
+    document.addEventListener('click', (e) => {
+      if (nav.classList.contains('open') &&
+          !nav.contains(e.target) &&
+          !toggle.contains(e.target)) {
+        nav.classList.remove('open');
+        toggle.classList.remove('open');
+        document.body.style.overflow = '';
+      }
     });
   }
 

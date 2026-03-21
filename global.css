@@ -132,16 +132,33 @@ nav ul li a.nav-cta:hover {
 .nav-toggle {
   display: none;
   flex-direction: column;
+  justify-content: center;
   gap: 5px;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
+  background: none;
+  border: none;
+  z-index: 10001;
+  position: relative;
 }
 .nav-toggle span {
-  width: 26px; height: 2px;
+  width: 24px; height: 2px;
   background: var(--cream);
-  transition: var(--transition-fast);
-  display: block;
   border-radius: 2px;
+  display: block;
+  transform-origin: center;
+  transition: transform 0.3s ease, opacity 0.3s ease, width 0.3s ease;
+}
+/* X shape when open */
+.nav-toggle.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-toggle.open span:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+.nav-toggle.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 /* ── Shared Section Styles ── */
@@ -345,19 +362,105 @@ footer {
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
-  header { padding: 16px 30px; }
-  header.scrolled { padding: 12px 30px; }
-  nav ul { gap: 24px; }
+  header { padding: 16px 24px; }
+  header.scrolled { padding: 12px 24px; }
+  nav ul { gap: 20px; }
 }
+
 @media (max-width: 768px) {
-  nav { display: none; }
-  nav.open { display: flex; flex-direction: column; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10,26,10,0.97); z-index: 9998; justify-content: center; align-items: center; }
-  nav.open ul { flex-direction: column; gap: 30px; text-align: center; }
-  nav.open ul li a { font-size: 20px; letter-spacing: 3px; }
+  /* Hide desktop nav, show hamburger */
+  #main-nav { display: none; }
   .nav-toggle { display: flex; }
-  .footer-inner { grid-template-columns: 1fr 1fr; gap: 40px; }
+
+  /* Mobile nav drawer — slides down from header */
+  #main-nav.open {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    /* Height fits content, not full screen */
+    padding: 80px 0 32px;
+    background: rgba(8, 20, 8, 0.98);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid rgba(200, 146, 26, 0.2);
+    z-index: 9998;
+    animation: drawerDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+
+  @keyframes drawerDown {
+    from {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  #main-nav.open ul {
+    flex-direction: column;
+    gap: 0;
+    align-items: stretch;
+    padding: 0 24px;
+  }
+
+  #main-nav.open ul li {
+    border-bottom: 1px solid rgba(253, 246, 236, 0.07);
+  }
+  #main-nav.open ul li:last-child {
+    border-bottom: none;
+    padding-top: 16px;
+    margin-top: 8px;
+  }
+
+  #main-nav.open ul li a {
+    display: block;
+    padding: 16px 8px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    color: rgba(253, 246, 236, 0.85);
+    text-transform: uppercase;
+  }
+  #main-nav.open ul li a::after {
+    display: none;
+  }
+  #main-nav.open ul li a:hover {
+    color: var(--amber-lt);
+    background: rgba(232, 124, 12, 0.06);
+    padding-left: 16px;
+    transition: all 0.2s ease;
+  }
+  #main-nav.open ul li a.active {
+    color: var(--amber);
+  }
+
+  /* CTA button in mobile — full width pill */
+  #main-nav.open ul li a.nav-cta {
+    display: block;
+    text-align: center;
+    background: var(--amber);
+    color: var(--forest);
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  #main-nav.open ul li a.nav-cta:hover {
+    background: var(--amber-lt);
+    padding-left: 24px;
+  }
+
+  /* Footer adjustments */
+  .footer-inner { grid-template-columns: 1fr 1fr; gap: 36px; }
 }
+
 @media (max-width: 480px) {
+  header { padding: 14px 18px; }
+  .logo { font-size: 20px; }
   .footer-inner { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; gap: 10px; text-align: center; }
 }

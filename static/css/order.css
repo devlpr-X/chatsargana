@@ -25,7 +25,7 @@
 .nav-dropdown {
   display: none;
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 2px);
   right: 0;
   background: #1a2b1c;
   border: 1px solid rgba(255,255,255,.1);

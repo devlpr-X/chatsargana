@@ -349,19 +349,22 @@ def user_register(request):
     errors = {}
     if request.method == 'POST':
         from django.contrib.auth.models import User
-        username  = request.POST.get('username', '').strip()
+        email     = request.POST.get('email', '').strip()
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')
-        email     = request.POST.get('email', '').strip()
 
-        if not username:             errors['username']  = 'Нэвтрэх нэр оруулна уу'
-        elif User.objects.filter(username=username).exists():
-                                     errors['username']  = 'Энэ нэр бүртгэлтэй байна'
-        if not password1:            errors['password1'] = 'Нууц үг оруулна уу'
-        elif len(password1) < 6:     errors['password1'] = 'Нууц үг хамгийн багадаа 6 тэмдэгт'
-        elif password1 != password2: errors['password2'] = 'Нууц үг таарахгүй байна'
+        if not email:                        errors['email']     = 'И-мэйл оруулна уу'
+        elif User.objects.filter(email=email).exists():
+                                             errors['email']     = 'Энэ и-мэйл бүртгэлтэй байна'
+        if not password1:                    errors['password1'] = 'Нууц үг оруулна уу'
+        elif len(password1) < 6:             errors['password1'] = 'Нууц үг хамгийн багадаа 6 тэмдэгт'
+        elif password1 != password2:         errors['password2'] = 'Нууц үг таарахгүй байна'
 
         if not errors:
+            username = email.split('@')[0]
+            base, i = username, 1
+            while User.objects.filter(username=username).exists():
+                username = f'{base}{i}'; i += 1
             user = User.objects.create_user(username=username, password=password1, email=email)
             login(request, user)
             return redirect('core:index')

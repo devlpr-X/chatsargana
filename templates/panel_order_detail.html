@@ -1,0 +1,122 @@
+{% extends 'panel_base.html' %}
+
+{% block title %}Захиалга #{{ order.pk }}{% endblock %}
+{% block topbar_title %}Захиалга #{{ order.pk }}{% endblock %}
+{% block nav_orders %}active{% endblock %}
+
+{% block extra_css %}
+{% if order.latitude %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:28px;flex-wrap:wrap;">
+  <a href="{% url 'core:panel_orders' %}" class="btn-p btn-p-ghost">← Буцах</a>
+  <h1 style="font-size:1.4rem;font-weight:800">Захиалга #{{ order.pk }}</h1>
+  <span class="s-badge s-{{ order.status }}">{{ order.get_status_display }}</span>
+</div>
+
+<!-- Status change form -->
+<div class="panel-card" style="margin-bottom:24px">
+  <div class="panel-card-header">
+    <h2>Төлөв өөрчлөх</h2>
+  </div>
+  <div style="padding:18px 22px;">
+    <form method="post" class="status-form">
+      {% csrf_token %}
+      <select name="status" class="status-select">
+        {% for val, label in status_choices %}
+          <option value="{{ val }}" {% if order.status == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-p btn-p-primary">Хадгалах</button>
+    </form>
+  </div>
+</div>
+
+<!-- Details grid -->
+<div class="detail-grid">
+  <div class="detail-section">
+    <h3>Захиалагч</h3>
+    <div class="detail-row"><span class="dk">Нэр</span><span class="dv">{{ order.customer_name }}</span></div>
+    <div class="detail-row"><span class="dk">Утас</span>
+      <span class="dv"><a href="tel:{{ order.customer_phone }}" style="color:#7ec850">{{ order.customer_phone }}</a></span>
+    </div>
+    {% if order.customer_email %}
+    <div class="detail-row"><span class="dk">И-мэйл</span>
+      <span class="dv"><a href="mailto:{{ order.customer_email }}" style="color:#7ec850">{{ order.customer_email }}</a></span>
+    </div>
+    {% endif %}
+    {% if order.user %}
+    <div class="detail-row"><span class="dk">Акаунт</span><span class="dv">{{ order.user.username }}</span></div>
+    {% endif %}
+  </div>
+
+  <div class="detail-section">
+    <h3>Захиалга</h3>
+    <div class="detail-row"><span class="dk">Огноо</span><span class="dv">{{ order.created_at|date:"Y.m.d H:i" }}</span></div>
+    <div class="detail-row"><span class="dk">Нийт дүн</span><span class="dv" style="color:#7ec850;font-weight:700">₮{{ order.total_price|floatformat:0 }}</span></div>
+    <div class="detail-row"><span class="dk">Зүйлс</span><span class="dv">{{ order.items.count }} төрөл</span></div>
+  </div>
+
+  <div class="detail-section" style="grid-column:1/-1;">
+    <h3>Хүргэлтийн хаяг</h3>
+    <div class="detail-row"><span class="dk">Хаяг</span><span class="dv">{{ order.address }}</span></div>
+    {% if order.latitude %}
+    <div class="detail-row"><span class="dk">Координат</span><span class="dv">{{ order.latitude|floatformat:5 }}, {{ order.longitude|floatformat:5 }}</span></div>
+    {% endif %}
+    {% if order.note %}
+    <div class="detail-row"><span class="dk">Тэмдэглэл</span><span class="dv">{{ order.note }}</span></div>
+    {% endif %}
+    {% if order.latitude and order.longitude %}
+    <div id="detail-map"></div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Items table -->
+<div class="panel-card">
+  <div class="panel-card-header"><h2>Захиалсан бүтээгдэхүүнүүд</h2></div>
+  <table class="panel-table">
+    <thead>
+      <tr>
+        <th>Бүтээгдэхүүн</th>
+        <th>Нэгжийн үнэ</th>
+        <th>Тоо</th>
+        <th>Нийт</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in order.items.all %}
+      <tr>
+        <td>{{ item.product_name }}</td>
+        <td>₮{{ item.price|floatformat:0 }}</td>
+        <td>{{ item.quantity }}</td>
+        <td style="font-weight:700;color:#7ec850">₮{{ item.subtotal|floatformat:0 }}</td>
+      </tr>
+      {% endfor %}
+      <tr>
+        <td colspan="3" style="text-align:right;font-weight:600;padding-top:12px">Нийт дүн:</td>
+        <td style="font-size:1.1rem;font-weight:800;color:#7ec850;padding-top:12px">₮{{ order.total_price|floatformat:0 }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if order.latitude and order.longitude %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('detail-map', {scrollWheelZoom:false})
+            .setView([{{ order.latitude }}, {{ order.longitude }}], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OSM',maxZoom:19}).addTo(map);
+L.marker([{{ order.latitude }}, {{ order.longitude }}], {
+  icon: L.divIcon({html:'<div style="font-size:1.8rem">📍</div>',iconSize:[32,32],iconAnchor:[16,32],className:''})
+}).addTo(map);
+</script>
+{% endif %}
+{% endblock %}

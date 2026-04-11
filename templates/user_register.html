@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Бүртгүүлэх — Чацаргана{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/order.css' %}" />{% endblock %}
+
+{% block content %}
+<div class="order-page" style="display:flex;align-items:center;justify-content:center;min-height:75vh;">
+  <div style="width:100%;max-width:380px;padding:0 20px;">
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:40px 36px;">
+
+      <div style="text-align:center;margin-bottom:28px;">
+        <div style="font-size:1.5rem;font-weight:800;color:#7ec850">Чацар<span style="color:#fdf6e3">гана</span></div>
+        <div style="font-size:.8rem;color:rgba(253,246,227,.45);margin-top:4px">Шинэ бүртгэл</div>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Нэвтрэх нэр <span class="req">*</span></label>
+          <input type="text" name="username" class="form-control {% if errors.username %}error{% endif %}"
+                 value="{{ form_data.username|default:'' }}" autofocus autocomplete="username" placeholder="username" />
+          {% if errors.username %}<div class="form-error">{{ errors.username }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>И-мэйл <span style="opacity:.5;font-size:.8rem">(заавал биш)</span></label>
+          <input type="email" name="email" class="form-control"
+                 value="{{ form_data.email|default:'' }}" placeholder="email@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Нууц үг <span class="req">*</span></label>
+          <input type="password" name="password1" class="form-control {% if errors.password1 %}error{% endif %}"
+                 autocomplete="new-password" placeholder="Хамгийн багадаа 6 тэмдэгт" />
+          {% if errors.password1 %}<div class="form-error">{{ errors.password1 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label>Нууц үг давтах <span class="req">*</span></label>
+          <input type="password" name="password2" class="form-control {% if errors.password2 %}error{% endif %}"
+                 autocomplete="new-password" placeholder="••••••••" />
+          {% if errors.password2 %}<div class="form-error">{{ errors.password2 }}</div>{% endif %}
+        </div>
+        <button type="submit" class="btn-order" style="margin-top:8px">Бүртгүүлэх →</button>
+      </form>
+
+      <div style="text-align:center;margin-top:20px;font-size:.85rem;color:rgba(253,246,227,.45);">
+        Бүртгэлтэй юу?
+        <a href="{% url 'core:login' %}" style="color:#7ec850;text-decoration:none">Нэвтрэх</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

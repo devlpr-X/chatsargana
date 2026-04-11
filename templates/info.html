@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Танилцуулга — Чацаргана{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/info.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ── PAGE HERO ── -->
+<section class="page-hero">
+  <div class="page-hero-bg">
+    <div class="ph-orb ph-orb-1"></div>
+    <div class="ph-orb ph-orb-2"></div>
+  </div>
+  <div class="page-hero-content">
+    <p class="section-label">Танилцуулга</p>
+    <h1 class="page-title">Чацаргана<br><em>гэж юу вэ?</em></h1>
+    <p class="page-subtitle">{{ hero_subtitle }}</p>
+  </div>
+  <div class="ph-scroll-line"></div>
+</section>
+
+<!-- ── INTRO STORY ── -->
+<section class="intro-story">
+  <div class="story-inner">
+    <div class="story-text reveal">
+      <p class="section-label">{{ story_label }}</p>
+      <h2 class="section-title">{{ story_title_1 }}<br><em>{{ story_title_2 }}</em></h2>
+      <div class="story-body">
+        <p>{{ story_body_1|safe }}</p>
+        <p>{{ story_body_2|safe }}</p>
+        <p>{{ story_body_3|safe }}</p>
+      </div>
+    </div>
+    <div class="story-visual reveal reveal-delay-2">
+      <div class="story-img-frame">
+        <img src="/media/products/product3.png" alt="Чацаргана жимс"
+             onerror="this.style.display='none'" />
+        <div class="img-decoration img-dec-1"></div>
+        <div class="img-decoration img-dec-2"></div>
+      </div>
+      <div class="story-fact-card">
+        <div class="fact-num">{{ fact_num }}</div>
+        <div class="fact-text">{{ fact_text }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── NUTRITION CHART ── -->
+<section class="nutrition-section">
+  <div class="nutrition-inner">
+    <div class="nutrition-header reveal">
+      <p class="section-label">Найрлага</p>
+      <h2 class="section-title">Шим тэжээлийн <em>баялаг найрлага</em></h2>
+      <p class="nutrition-sub">{{ nutrition_sub }}</p>
+    </div>
+    <div class="nutrition-grid">
+      {% for nc in nutrient_cards %}
+        <div class="nutrient-card reveal reveal-delay-{{ forloop.counter }}">
+          <div class="nc-top">
+            <span class="nc-letter">{{ nc.letter }}</span>
+            <div class="nc-bar-wrap">
+              <div class="nc-bar" style="--pct:{{ nc.bar_pct }}%"></div>
+            </div>
+          </div>
+          <h4>{{ nc.title }}</h4>
+          <p class="nc-value">{{ nc.value_text }}</p>
+          <p class="nc-note">{{ nc.note }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── USAGE SECTION ── -->
+<section class="usage-section">
+  <div class="usage-inner">
+    <div class="usage-header reveal">
+      <p class="section-label">Хэрэглэх арга</p>
+      <h2 class="section-title">Олон хэлбэрт <em>хэрэглээ</em></h2>
+    </div>
+    <div class="usage-grid">
+      {% for uc in usage_cards %}
+        <div class="usage-card reveal reveal-delay-{{ forloop.counter }}">
+          <div class="uc-icon">{{ uc.icon }}</div>
+          <h4>{{ uc.title }}</h4>
+          <p>{{ uc.description }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="info-cta">
+  <div class="info-cta-inner reveal">
+    <h2 class="section-title">Бүтээгдэхүүнээ<br><em>сонгоно уу</em></h2>
+    <p>{{ cta_body }}</p>
+    <a href="{% url 'core:products' %}" class="btn btn-primary">
+      Бүтээгдэхүүн үзэх <span class="arrow-icon"></span>
+    </a>
+  </div>
+</section>
+
+{% endblock %}

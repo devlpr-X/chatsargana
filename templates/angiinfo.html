@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Ашиг тус — Чацаргана{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/angiinfo.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<section class="benefits-hero">
+  <div class="bh-bg">
+    <div class="bh-orb bh-orb-1"></div>
+    <div class="bh-orb bh-orb-2"></div>
+    <div class="bh-dots"></div>
+  </div>
+  <div class="bh-content">
+    <p class="section-label">Эрүүл мэнд</p>
+    <h1 class="bh-title">Чацарганы<br><em>ашиг тус</em></h1>
+    <p class="bh-sub">{{ hero_sub }}</p>
+  </div>
+</section>
+
+<!-- ── KEY NUMBERS ── -->
+<section class="key-numbers">
+  <div class="kn-inner">
+    {% for kn in key_numbers %}
+      <div class="kn-item reveal {% if not forloop.first %}reveal-delay-{{ forloop.counter0 }}{% endif %}">
+        <div class="kn-num">{{ kn.num }}</div>
+        <div class="kn-label">{{ kn.label|linebreaksbr }}</div>
+      </div>
+      {% if not forloop.last %}<div class="kn-div"></div>{% endif %}
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ── BENEFITS MAIN ── -->
+<section class="benefits-main">
+  <div class="bm-inner">
+    <div class="bm-header reveal">
+      <p class="section-label">Дэлгэрэнгүй ашиг тус</p>
+      <h2 class="section-title">Таны биед <em>үзүүлэх нөлөө</em></h2>
+    </div>
+
+    {% for benefit in benefits %}
+      <div class="benefit-row {% if benefit.is_reverse %}br-reverse{% endif %} reveal">
+        <div class="br-visual">
+          <div class="br-icon-wrap">
+            <span class="br-icon">{{ benefit.icon }}</span>
+            <div class="br-glow"></div>
+          </div>
+          <div class="br-num">{{ benefit.number }}</div>
+        </div>
+        <div class="br-content">
+          <h3>{{ benefit.title }}</h3>
+          <p>{{ benefit.description }}</p>
+          {% if benefit.get_tags_list %}
+            <div class="br-tags">
+              {% for tag in benefit.get_tags_list %}
+                <span>{{ tag }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="benefits-cta-section">
+  <div class="bc-inner reveal">
+    <h2 class="section-title">Байгалийн <em>хамгаалагчаа</em><br>олж авна уу</h2>
+    <p>{{ cta_body }}</p>
+    <div class="bc-btns">
+      <a href="{% url 'core:products' %}" class="btn btn-primary">
+        Бүтээгдэхүүн үзэх <span class="arrow-icon"></span>
+      </a>
+      <a href="{% url 'core:info' %}" class="btn btn-outline">Танилцуулга унших</a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

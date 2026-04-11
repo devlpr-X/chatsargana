@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Чацаргана — Байгалийн Алт{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-orb hero-orb-1"></div>
+    <div class="hero-orb hero-orb-2"></div>
+    <div class="hero-orb hero-orb-3"></div>
+    <div class="hero-grid"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      <span>{{ hero_badge }}</span>
+    </div>
+    <h1 class="hero-title">
+      <span class="hero-line">{{ hero_title_1 }}</span>
+      <span class="hero-line italic">{{ hero_title_2 }}</span>
+    </h1>
+    <p class="hero-subtitle">{{ hero_subtitle }}</p>
+    <div class="hero-actions">
+      <a href="{% url 'core:products' %}" class="btn btn-primary">
+        Бүтээгдэхүүн үзэх <span class="arrow-icon"></span>
+      </a>
+      <a href="{% url 'core:info' %}" class="btn btn-outline">Дэлгэрэнгүй</a>
+    </div>
+    <div class="hero-stats">
+      {% for stat in hero_stats %}
+        <div class="stat">
+          <span class="stat-num">{{ stat.num }}</span>
+          <span class="stat-label">{{ stat.label|linebreaksbr }}</span>
+        </div>
+        {% if not forloop.last %}<div class="stat-divider"></div>{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Floating product cards -->
+  <div class="hero-visual">
+    <div class="product-orbit">
+      <div class="orbit-ring"></div>
+      <div class="orbit-ring orbit-ring-2"></div>
+      <div class="center-product">
+        <div class="center-glow"></div>
+        <img src="/media/products/product3.png" alt="Чацарганы тос" class="center-img" />
+      </div>
+      {% for product in preview_products|slice:":4" %}
+        <div class="orbit-item orbit-{{ forloop.counter }}">
+          {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}" />{% endif %}
+          <span>{{ product.name|truncatechars:5 }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="hero-scroll-hint">
+    <div class="scroll-line"></div>
+    <span>Доош гүйлгэх</span>
+  </div>
+</section>
+
+<!-- ── FEATURES STRIP ── -->
+<section class="features-strip">
+  <div class="strip-inner">
+    {% for feature in features %}
+      <div class="strip-item">
+        <div class="strip-icon">{{ feature.icon }}</div>
+        <div>
+          <strong>{{ feature.title }}</strong>
+          <p>{{ feature.description }}</p>
+        </div>
+      </div>
+      {% if not forloop.last %}<div class="strip-sep">·</div>{% endif %}
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ── ABOUT TEASER ── -->
+<section class="about-teaser">
+  <div class="teaser-inner">
+    <div class="teaser-text reveal">
+      <p class="section-label">{{ about_label }}</p>
+      <h2 class="section-title">{{ about_title|safe }}</h2>
+      <p class="teaser-body">{{ about_body }}</p>
+      <a href="{% url 'core:info' %}" class="btn btn-outline" style="margin-top:24px">
+        Дэлгэрэнгүй унших <span class="arrow-icon"></span>
+      </a>
+    </div>
+    <div class="teaser-visual reveal reveal-delay-2">
+      <div class="teaser-card-stack">
+        {% for card in about_cards %}
+          <div class="teaser-card tc-{{ forloop.counter }}">
+            {% if card.card_type == 'num' %}
+              <div class="tc-num">{{ card.value }}</div>
+            {% else %}
+              <div class="tc-icon">{{ card.value }}</div>
+            {% endif %}
+            <div class="tc-label">{{ card.label|linebreaksbr }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRODUCTS PREVIEW ── -->
+<section class="products-preview">
+  <div class="products-inner">
+    <div class="products-header reveal">
+      <p class="section-label">{{ products_label }}</p>
+      <h2 class="section-title">{{ products_title|safe }}</h2>
+    </div>
+    <div class="products-grid">
+      {% for product in preview_products %}
+        <div class="prod-card reveal reveal-delay-{{ forloop.counter }}">
+          <div class="prod-img-wrap">
+            {% if product.image %}
+              <img src="{{ product.image.url }}" alt="{{ product.name }}" />
+            {% endif %}
+            {% if product.badge %}
+              <div class="prod-badge">{{ product.badge|title }}</div>
+            {% endif %}
+          </div>
+          <div class="prod-info">
+            <h3>{{ product.name }}</h3>
+            <p>{{ product.description|truncatechars:70 }}</p>
+            <a href="{% url 'core:products' %}" class="prod-link">Дэлгэрэнгүй →</a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="products-cta reveal">
+      <a href="{% url 'core:products' %}" class="btn btn-primary">
+        Бүх бүтээгдэхүүн үзэх <span class="arrow-icon"></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── BENEFITS TEASER ── -->
+<section class="benefits-teaser">
+  <div class="benefits-inner">
+    <div class="benefits-header reveal">
+      <p class="section-label">{{ benefits_label }}</p>
+      <h2 class="section-title">{{ benefits_title|safe }}</h2>
+    </div>
+    <div class="benefits-grid">
+      {% for benefit in benefit_teasers %}
+        <div class="benefit-item reveal reveal-delay-{{ forloop.counter }}">
+          <div class="benefit-icon">{{ benefit.icon }}</div>
+          <h4>{{ benefit.title }}</h4>
+          <p>{{ benefit.description }}</p>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="benefits-cta reveal">
+      <a href="{% url 'core:benefits' %}" class="btn btn-outline">
+        Бүх ашиг тус →
+      </a>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

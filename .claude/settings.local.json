@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python manage.py makemigrations)",
+      "Bash(python manage.py migrate)",
+      "Bash(python manage.py seed_data)",
+      "Bash(python -c ':*)",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(python manage.py shell)",
+      "Bash(python manage.py runserver --noreload)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/info/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/products/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/benefits/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/about/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8000/admin/)",
+      "Bash(pkill -f \"python manage.py runserver\")",
+      "Bash(python manage.py makemigrations core)",
+      "Bash(python manage.py check)"
+    ]
+  }
+}

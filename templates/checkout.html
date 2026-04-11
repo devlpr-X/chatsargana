@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Захиалга өгөх — Чацаргана{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/order.css' %}" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="order-page">
+  <div class="order-container">
+    <h1 class="order-page-title">Захиалга <em>өгөх</em></h1>
+    <p class="order-subtitle">Хүргэлтийн мэдээлэл бөглөнө үү</p>
+
+    <form method="post" id="checkout-form">
+      {% csrf_token %}
+      <div class="checkout-grid">
+
+        <!-- ── LEFT: Form ── -->
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+          <!-- Customer info -->
+          <div class="form-card">
+            <h3>👤 Захиалагчийн мэдээлэл</h3>
+            <div class="form-group">
+              <label>Нэр <span class="req">*</span></label>
+              <input type="text" name="name" class="form-control {% if errors.name %}error{% endif %}"
+                     value="{{ form_data.name|default:'' }}" placeholder="Таны нэр" />
+              {% if errors.name %}<div class="form-error">{{ errors.name }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label>Утасны дугаар <span class="req">*</span></label>
+              <input type="tel" name="phone" class="form-control {% if errors.phone %}error{% endif %}"
+                     value="{{ form_data.phone|default:'' }}" placeholder="+976 XXXX XXXX" />
+              {% if errors.phone %}<div class="form-error">{{ errors.phone }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label>И-мэйл <span style="opacity:.5;font-size:.8rem">(заавал биш)</span></label>
+              <input type="email" name="email" class="form-control"
+                     value="{{ form_data.email|default:'' }}" placeholder="email@example.com" />
+            </div>
+          </div>
+
+          <!-- Delivery location -->
+          <div class="form-card">
+            <h3>📍 Хүргэлтийн байршил</h3>
+            <div class="form-group">
+              <label>Дэлгэрэнгүй хаяг <span class="req">*</span></label>
+              <textarea name="address" id="address-input" class="form-control {% if errors.address %}error{% endif %}"
+                        rows="2" placeholder="Дүүрэг, хороо, байр, тоот...">{{ form_data.address|default:'' }}</textarea>
+              {% if errors.address %}<div class="form-error">{{ errors.address }}</div>{% endif %}
+            </div>
+
+            <label style="display:block;font-size:.83rem;color:rgba(253,246,227,.6);margin-bottom:6px;font-weight:500">
+              Газрын зураг дээр байршлаа тэмдэглэх
+            </label>
+            <div id="checkout-map"></div>
+            <p class="map-hint">Газрын зураг дээр дарж хүргэлтийн байршлаа тодорхойлно уу</p>
+            <button type="button" id="locate-btn" class="map-locate-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+              Миний байршил ашиглах
+            </button>
+            <input type="hidden" name="latitude"  id="lat-input"  value="{{ form_data.latitude|default:'' }}" />
+            <input type="hidden" name="longitude" id="lng-input"  value="{{ form_data.longitude|default:'' }}" />
+          </div>
+
+          <!-- Note -->
+          <div class="form-card">
+            <h3>📝 Нэмэлт тайлбар</h3>
+            <div class="form-group" style="margin-bottom:0">
+              <textarea name="note" class="form-control" rows="3"
+                        placeholder="Хүргэлттэй холбоотой нэмэлт заавар...">{{ form_data.note|default:'' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── RIGHT: Summary + Submit ── -->
+        <div>
+          <div class="order-summary-card">
+            <h3>Захиалгын дүн</h3>
+            <ul class="summary-items">
+              {% for item in items %}
+              <li class="summary-item">
+                <span class="name">{{ item.name }}</span>
+                <span class="qty">×{{ item.qty }}</span>
+                <span>₮{{ item.subtotal|floatformat:0 }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+            <div class="summary-total">
+              <span class="label">Нийт</span>
+              <span class="amount">₮{{ total|floatformat:0 }}</span>
+            </div>
+            <button type="submit" class="btn-order">Захиалга баталгаажуулах ✓</button>
+            <a href="{% url 'core:cart' %}" class="btn-outline" style="display:flex;justify-content:center;margin-top:10px;">← Сагс руу буцах</a>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Ulaanbaatar default center
+const DEFAULT_LAT = 47.9077, DEFAULT_LNG = 106.8832;
+
+const map = L.map('checkout-map').setView([DEFAULT_LAT, DEFAULT_LNG], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap',
+  maxZoom: 19,
+}).addTo(map);
+
+const pinIcon = L.divIcon({
+  html: '<div style="font-size:2rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))">📍</div>',
+  iconSize:   [32, 32],
+  iconAnchor: [16, 32],
+  className: '',
+});
+
+let marker = null;
+const latIn = document.getElementById('lat-input');
+const lngIn = document.getElementById('lng-input');
+const addrIn = document.getElementById('address-input');
+
+// Restore pin if form had values
+const initLat = parseFloat(latIn.value), initLng = parseFloat(lngIn.value);
+if (!isNaN(initLat) && !isNaN(initLng)) {
+  marker = L.marker([initLat, initLng], {icon: pinIcon}).addTo(map);
+  map.setView([initLat, initLng], 15);
+}
+
+map.on('click', async (e) => {
+  const {lat, lng} = e.latlng;
+  latIn.value = lat.toFixed(6);
+  lngIn.value = lng.toFixed(6);
+  if (marker) marker.setLatLng([lat, lng]);
+  else marker = L.marker([lat, lng], {icon: pinIcon}).addTo(map);
+
+  // Reverse geocode via Nominatim
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=mn`);
+    const d = await r.json();
+    if (d.display_name && !addrIn.value.trim()) {
+      addrIn.value = d.display_name;
+    }
+  } catch(_) {}
+});
+
+document.getElementById('locate-btn').addEventListener('click', () => {
+  if (!navigator.geolocation) return alert('Таны хөтөч геолокацийг дэмждэггүй');
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    latIn.value = lat.toFixed(6);
+    lngIn.value = lng.toFixed(6);
+    map.setView([lat, lng], 16);
+    if (marker) marker.setLatLng([lat, lng]);
+    else marker = L.marker([lat, lng], {icon: pinIcon}).addTo(map);
+
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=mn`);
+      const d = await r.json();
+      if (d.display_name) addrIn.value = d.display_name;
+    } catch(_) {}
+  }, () => alert('Байршлыг тодорхойлоход алдаа гарлаа'));
+});
+</script>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% load static %}<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Панел{% endblock %} — Чацаргана</title>
+  <link rel="stylesheet" href="{% static 'css/panel.css' %}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="panel-body">
+
+<div class="panel-wrap">
+
+  <!-- ── Sidebar ── -->
+  <aside class="panel-side">
+    <div class="side-brand">
+      <div class="side-brand-logo">Чацар<span>гана</span></div>
+      <div class="side-brand-sub">Удирдлагын самбар</div>
+    </div>
+
+    <nav class="side-nav">
+      <div class="side-label">Үндсэн</div>
+      <a href="{% url 'core:panel_dashboard' %}" class="side-link {% block nav_dash %}{% endblock %}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Самбар
+      </a>
+
+      <div class="side-label">Захиалгууд</div>
+      <a href="{% url 'core:panel_orders' %}" class="side-link {% block nav_orders %}{% endblock %}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17H5a2 2 0 0 0-2 2"/><path d="M9 3H5a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4"/><rect x="9" y="11" width="12" height="10" rx="2"/></svg>
+        Бүх захиалга
+        {% if pending_count %}<span class="badge">{{ pending_count }}</span>{% endif %}
+      </a>
+      <a href="{% url 'core:panel_orders' %}?status=pending" class="side-link">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Хүлээгдэж буй
+      </a>
+
+      <div class="side-label">Сайт</div>
+      <a href="{% url 'core:products' %}" class="side-link" target="_blank">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        Сайт харах
+      </a>
+      <a href="/admin/" class="side-link" target="_blank">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Django Admin
+      </a>
+    </nav>
+
+    <div class="side-footer">
+      <a href="{% url 'core:panel_logout' %}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Гарах
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <div class="panel-main">
+    <div class="panel-topbar">
+      <div class="topbar-title">{% block topbar_title %}Самбар{% endblock %}</div>
+      <div class="topbar-user">
+        {{ request.user.username }}
+        <a href="{% url 'core:panel_logout' %}">Гарах</a>
+      </div>
+    </div>
+
+    <div class="panel-content">
+      {% if messages %}
+      <ul class="django-messages">
+        {% for msg in messages %}
+          <li class="{{ msg.tags }}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

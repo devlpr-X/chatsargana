@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Бүтээгдэхүүн — Чацаргана{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/comic.css' %}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ── PAGE HERO ── -->
+<section class="page-hero products-hero">
+  <div class="ph-orb ph-orb-1"></div>
+  <div class="ph-orb ph-orb-2"></div>
+  <div class="page-hero-content">
+    <p class="section-label">Манай цуглуулга</p>
+    <h1 class="page-title">Чацарганы<br><em>бүтээгдэхүүнүүд</em></h1>
+    <p class="page-subtitle">Байгалийн шим тэжээлийг таны амьдралд нэвтрүүлэх {{ products|length }}+ төрлийн цуглуулга</p>
+  </div>
+</section>
+
+<!-- ── FILTER TABS ── -->
+<section class="filter-section">
+  <div class="filter-inner">
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">Бүгд</button>
+      {% for cat in categories %}
+        <button class="filter-tab" data-filter="{{ cat.slug }}">{{ cat.name }}</button>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── PRODUCTS GRID ── -->
+<section class="products-main">
+  <div class="products-main-inner">
+
+    {% for product in products %}
+      <div class="product-item {% if product.is_featured %}product-featured{% endif %}"
+           data-category="{{ product.category.slug|default:'other' }}">
+        <div class="pi-visual">
+          <div class="pi-blur-bg"
+               {% if product.image %}style="background-image:url('{{ product.image.url }}')"{% endif %}></div>
+          <div class="pi-glow"></div>
+          {% if product.image %}
+            <img src="{{ product.image.url }}"
+                 alt="{{ product.name }}"
+                 class="pi-img"
+                 data-lightbox
+                 data-caption="{{ product.name }} — {{ product.unit }}" />
+          {% endif %}
+          <div class="pi-zoom-hint">🔍 Томруулж харах</div>
+          {% if product.badge == 'bestseller' %}
+            <div class="pi-tag pi-tag-best">Bestseller</div>
+          {% elif product.badge == 'premium' %}
+            <div class="pi-tag pi-tag-premium">Premium</div>
+          {% elif product.badge == 'new' %}
+            <div class="pi-tag pi-tag-new">Шинэ</div>
+          {% endif %}
+        </div>
+        <div class="pi-info">
+          <div class="pi-header">
+            <div>
+              <p class="pi-cat">{{ product.category.name|default:"" }}</p>
+              <h3 class="pi-title">{{ product.name }}</h3>
+            </div>
+            <div class="pi-badge">{{ product.badge_icon }}</div>
+          </div>
+          <p class="pi-desc">{{ product.description }}</p>
+          {% if product.get_nutrients_list %}
+            <div class="pi-nutrients">
+              {% for nutrient in product.get_nutrients_list %}
+                <span class="pn-tag">{{ nutrient }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <div class="pi-price-row">
+            <div class="pi-price">
+              <span class="price-amount">₮{{ product.price|floatformat:0 }}</span>
+              <span class="price-unit">/ {{ product.unit }}</span>
+            </div>
+            <div class="pi-actions">
+              <button class="btn btn-primary pi-btn add-to-cart"
+                      data-id="{{ product.pk }}"
+                      data-name="{{ product.name }}">Сагсанд нэмэх</button>
+              <button class="pi-fav" aria-label="Дуртай">♡</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p style="color:var(--cream);text-align:center;padding:60px">Бүтээгдэхүүн олдсонгүй.</p>
+    {% endfor %}
+
+  </div>
+</section>
+
+<!-- ── QUALITY BANNER ── -->
+<section class="quality-banner">
+  <div class="qb-inner reveal">
+    <div class="qb-text">
+      <p class="section-label">Чанарын баталгаа</p>
+      <h2 class="section-title">100% байгалийн, <em>цэвэр найрлага</em></h2>
+      <p>Бид хиймэл өнгөлтөгч, химийн консерванты ашигладаггүй. Зөвхөн байгалийн цэвэр найрлага.</p>
+    </div>
+    <div class="qb-badges">
+      <div class="qb-badge"><span class="qbb-icon">🌿</span><span>Органик</span></div>
+      <div class="qb-badge"><span class="qbb-icon">🚫</span><span>Консерванты<br>хэрэглэхгүй</span></div>
+      <div class="qb-badge"><span class="qbb-icon">🏔️</span><span>УВС аймгийн<br>байгалийн</span></div>
+      <div class="qb-badge"><span class="qbb-icon">✅</span><span>Чанарын<br>баталгаа</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── LIGHTBOX ── -->
+<div id="lightbox" class="lightbox" aria-hidden="true">
+  <div class="lb-backdrop" id="lb-backdrop"></div>
+  <div class="lb-container">
+    <img id="lb-img" src="" alt="" />
+    <p class="lb-caption" id="lb-caption"></p>
+  </div>
+  <button class="lb-close" id="lb-close" aria-label="Хаах">
+    <span></span><span></span>
+  </button>
+  <div class="lb-esc-hint">ESC · гадна дарж хаана</div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/comic.js' %}"></script>
+<script>
+const CSRF = '{{ csrf_token }}';
+
+function showToast(msg) {
+  const t = document.getElementById('cart-toast');
+  const m = document.getElementById('cart-toast-msg');
+  if (!t) return;
+  m.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function updateBadge(n) {
+  document.querySelectorAll('.cart-badge').forEach(el => {
+    el.textContent = n;
+    el.classList.toggle('hidden', n === 0);
+  });
+}
+
+document.querySelectorAll('.add-to-cart').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id   = btn.dataset.id;
+    const name = btn.dataset.name;
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      const r = await fetch(`/cart/add/${id}/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded'},
+        body: 'qty=1',
+      });
+      const d = await r.json();
+      if (d.ok) {
+        updateBadge(d.cart_count);
+        showToast(`"${name}" сагсанд нэмлээ!`);
+        btn.textContent = '✓ Нэмэгдлээ';
+        setTimeout(() => { btn.textContent = 'Сагсанд нэмэх'; btn.disabled = false; }, 1800);
+      }
+    } catch(_) { btn.textContent = 'Сагсанд нэмэх'; btn.disabled = false; }
+  });
+});
+</script>
+{% endblock %}

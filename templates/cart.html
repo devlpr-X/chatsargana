@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Сагс — Чацаргана{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/order.css' %}" />{% endblock %}
+
+{% block content %}
+<div class="order-page">
+  <div class="order-container">
+    <h1 class="order-page-title">Миний <em>сагс</em></h1>
+    <p class="order-subtitle">Захиалгад нэмсэн бүтээгдэхүүнүүд</p>
+
+    {% if items %}
+      <div class="cart-list" id="cart-list">
+        {% for item in items %}
+        <div class="cart-item" id="row-{{ item.id }}">
+          {% if item.image %}
+            <img src="{{ item.image }}" alt="{{ item.name }}" class="ci-img" />
+          {% else %}
+            <div class="ci-no-img">🌿</div>
+          {% endif %}
+          <div>
+            <div class="ci-name">{{ item.name }}</div>
+            <div class="ci-unit">{{ item.unit }}</div>
+            <div class="ci-price">₮{{ item.price|floatformat:0 }} / нэгж</div>
+          </div>
+          <div class="ci-qty">
+            <button type="button" class="qty-dec" data-id="{{ item.id }}">−</button>
+            <span class="ci-qty-num" id="qty-{{ item.id }}">{{ item.qty }}</span>
+            <button type="button" class="qty-inc" data-id="{{ item.id }}">+</button>
+          </div>
+          <div class="ci-subtotal" id="sub-{{ item.id }}">₮{{ item.subtotal|floatformat:0 }}</div>
+          <button type="button" class="ci-remove" data-id="{{ item.id }}" title="Устгах">✕</button>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="cart-footer">
+        <div class="cart-total-block">
+          <div class="label">Нийт дүн</div>
+          <div class="amount" id="cart-total">₮{{ total|floatformat:0 }}</div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="{% url 'core:products' %}" class="btn-outline">← Үргэлжлүүлэн дэлгүүрлэх</a>
+          <a href="{% url 'core:checkout' %}" class="btn-order" style="display:inline-block;width:auto">Захиалга өгөх →</a>
+        </div>
+      </div>
+
+    {% else %}
+      <div class="cart-empty">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+        <p>Таны сагс хоосон байна</p>
+        <a href="{% url 'core:products' %}" class="btn-order" style="display:inline-block;width:auto">Бүтээгдэхүүн харах</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+async function postJSON(url, data) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {'X-CSRFToken': CSRF, 'Content-Type': 'application/x-www-form-urlencoded'},
+    body: new URLSearchParams(data),
+  });
+  return r.json();
+}
+
+function updateCartBadge(n) {
+  document.querySelectorAll('.cart-badge').forEach(el => {
+    el.textContent = n;
+    el.classList.toggle('hidden', n === 0);
+  });
+}
+
+document.querySelectorAll('.qty-dec, .qty-inc').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id  = btn.dataset.id;
+    const numEl = document.getElementById('qty-' + id);
+    const cur = parseInt(numEl.textContent);
+    const qty = btn.classList.contains('qty-inc') ? cur + 1 : Math.max(0, cur - 1);
+    const d = await postJSON(`/cart/update/${id}/`, {qty});
+    if (d.ok) {
+      if (qty === 0) {
+        document.getElementById('row-' + id).remove();
+      } else {
+        numEl.textContent = qty;
+        document.getElementById('sub-' + id).textContent = '₮' + Number(d.subtotal).toLocaleString();
+      }
+      document.getElementById('cart-total').textContent = '₮' + Number(d.cart_total).toLocaleString();
+      updateCartBadge(d.cart_count);
+      if (d.cart_count === 0) location.reload();
+    }
+  });
+});
+
+document.querySelectorAll('.ci-remove').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id = btn.dataset.id;
+    const d = await postJSON(`/cart/remove/${id}/`, {});
+    if (d.ok) {
+      document.getElementById('row-' + id).remove();
+      document.getElementById('cart-total').textContent = '₮' + Number(d.cart_total).toLocaleString();
+      updateCartBadge(d.cart_count);
+      if (d.cart_count === 0) location.reload();
+    }
+  });
+});
+</script>
+{% endblock %}

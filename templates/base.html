@@ -1,0 +1,107 @@
+{% load static %}<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Чацаргана — Байгалийн Алт{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/global.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/order.css' %}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header id="main-header">
+  <a href="{% url 'core:index' %}" class="logo">Чацар<span>гана</span></a>
+  <nav id="main-nav">
+    <ul>
+      <li><a href="{% url 'core:index' %}"    {% if request.resolver_match.url_name == 'index'    %}class="active"{% endif %}>Нүүр</a></li>
+      <li><a href="{% url 'core:info' %}"     {% if request.resolver_match.url_name == 'info'     %}class="active"{% endif %}>Танилцуулга</a></li>
+      <li><a href="{% url 'core:products' %}" {% if request.resolver_match.url_name == 'products' %}class="active"{% endif %}>Бүтээгдэхүүн</a></li>
+      <li><a href="{% url 'core:benefits' %}" {% if request.resolver_match.url_name == 'benefits' %}class="active"{% endif %}>Ашиг тус</a></li>
+      <li><a href="{% url 'core:about' %}"    class="nav-cta {% if request.resolver_match.url_name == 'about' %}active{% endif %}">Бидний тухай</a></li>
+      {% if request.user.is_authenticated %}
+        <li><a href="{% url 'core:my_orders' %}" {% if request.resolver_match.url_name == 'my_orders' %}class="active"{% endif %}>Захиалгууд</a></li>
+        <li class="nav-user-menu">
+          <a href="#" class="nav-user-trigger">{{ request.user.username }} ▾</a>
+          <ul class="nav-dropdown">
+            <li><a href="{% url 'core:my_orders' %}">Миний захиалга</a></li>
+            {% if request.user.is_staff %}
+            <li><a href="{% url 'core:panel_dashboard' %}">Самбар</a></li>
+            {% endif %}
+            <li><a href="{% url 'core:logout' %}">Гарах</a></li>
+          </ul>
+        </li>
+      {% else %}
+        <li><a href="{% url 'core:login' %}" {% if request.resolver_match.url_name == 'login' %}class="active"{% endif %}>Нэвтрэх</a></li>
+        <li><a href="{% url 'core:register' %}" class="nav-cta-sm {% if request.resolver_match.url_name == 'register' %}active{% endif %}">Бүртгүүлэх</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+  <!-- Cart icon -->
+  <a href="{% url 'core:cart' %}" class="cart-link" id="cart-nav-link" aria-label="Сагс">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/>
+      <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
+    </svg>
+    <span class="cart-badge {% if not cart_count %}hidden{% endif %}" id="cart-badge-nav">{{ cart_count }}</span>
+  </a>
+  <button class="nav-toggle" id="nav-toggle" aria-label="Цэс нээх">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<!-- Toast notification -->
+<div class="cart-toast" id="cart-toast">
+  <span class="ct-icon">🛒</span>
+  <span id="cart-toast-msg">Сагсанд нэмлээ!</span>
+</div>
+
+{% block content %}{% endblock %}
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="logo-footer">Чацар<span>гана</span></span>
+      <p>УВС аймгийн байгалийн чацарганаас гарган авсан органик бүтээгдэхүүн. Таны эрүүл мэндийн байгалийн түнш.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Хуудсууд</h4>
+      <ul>
+        <li><a href="{% url 'core:index' %}">Нүүр</a></li>
+        <li><a href="{% url 'core:info' %}">Танилцуулга</a></li>
+        <li><a href="{% url 'core:products' %}">Бүтээгдэхүүн</a></li>
+        <li><a href="{% url 'core:benefits' %}">Ашиг тус</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Бүтээгдэхүүн</h4>
+      <ul>
+        <li><a href="{% url 'core:products' %}">Цэвэр шүүс</a></li>
+        <li><a href="{% url 'core:products' %}">Тос</a></li>
+        <li><a href="{% url 'core:products' %}">Цай</a></li>
+        <li><a href="{% url 'core:products' %}">Сироп</a></li>
+        <li><a href="{% url 'core:products' %}">Капсул</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Холбоо барих</h4>
+      <ul>
+        <li><a href="{% url 'core:about' %}">Утас</a></li>
+        <li><a href="{% url 'core:about' %}">И-мэйл</a></li>
+        <li><a href="#">Facebook</a></li>
+        <li><a href="{% url 'core:about' %}">Бидний тухай</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>&copy; 2025 УВС Чацаргана. Зохиогчийн эрх хуулиар хамгаалагдсан.</p>
+    <p>Байгалийн цэвэр бүтээгдэхүүн</p>
+  </div>
+</footer>
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,82 @@
+{% extends 'panel_base.html' %}
+
+{% block title %}Самбар{% endblock %}
+{% block topbar_title %}Самбар{% endblock %}
+{% block nav_dash %}active{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Сайн байна уу, {{ request.user.get_full_name|default:request.user.username }} 👋</h1>
+  <p>Захиалгуудын ерөнхий дүгнэлт</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="sc-label">Нийт захиалга</div>
+    <div class="sc-value">{{ stats.pending|add:stats.confirmed|add:stats.shipped|add:stats.delivered|add:stats.cancelled }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-label">Хүлээгдэж буй</div>
+    <div class="sc-value" style="color:#f59e0b">{{ stats.pending }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-label">Баталгаажсан</div>
+    <div class="sc-value" style="color:#3b82f6">{{ stats.confirmed }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-label">Хүргэлтэнд</div>
+    <div class="sc-value" style="color:#8b5cf6">{{ stats.shipped }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="sc-label">Хүргэгдсэн</div>
+    <div class="sc-value" style="color:#22c55e">{{ stats.delivered }}</div>
+  </div>
+  <div class="stat-card accent">
+    <div class="sc-label">Нийт орлого</div>
+    <div class="sc-value" style="font-size:1.4rem">₮{{ total_revenue|floatformat:0 }}</div>
+    <div class="sc-sub">баталгаажсан + хүргэсэн</div>
+  </div>
+</div>
+
+<!-- Recent orders -->
+<div class="panel-card">
+  <div class="panel-card-header">
+    <h2>Сүүлийн захиалгууд</h2>
+    <a href="{% url 'core:panel_orders' %}" class="btn-p btn-p-ghost" style="font-size:.8rem;padding:6px 16px">Бүгдийг харах →</a>
+  </div>
+  <table class="panel-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Нэр</th>
+        <th>Утас</th>
+        <th>Бүтээгдэхүүн</th>
+        <th>Нийт</th>
+        <th>Төлөв</th>
+        <th>Огноо</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in recent_orders %}
+      <tr>
+        <td><a href="{% url 'core:panel_order_detail' order_id=order.pk %}">#{{ order.pk }}</a></td>
+        <td>{{ order.customer_name }}</td>
+        <td>{{ order.customer_phone }}</td>
+        <td style="color:rgba(232,240,233,.55);font-size:.82rem">
+          {% for item in order.items.all|slice:":2" %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          {% if order.items.count > 2 %}…{% endif %}
+        </td>
+        <td style="font-weight:700;color:#7ec850">₮{{ order.total_price|floatformat:0 }}</td>
+        <td><span class="s-badge s-{{ order.status }}">{{ order.get_status_display }}</span></td>
+        <td style="color:rgba(232,240,233,.5);font-size:.82rem">{{ order.created_at|date:"m.d H:i" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" style="text-align:center;padding:32px;color:rgba(232,240,233,.35)">Захиалга байхгүй байна</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

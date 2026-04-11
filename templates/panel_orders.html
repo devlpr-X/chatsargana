@@ -1,0 +1,60 @@
+{% extends 'panel_base.html' %}
+
+{% block title %}Захиалгууд{% endblock %}
+{% block topbar_title %}Захиалгууд{% endblock %}
+{% block nav_orders %}active{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Захиалгууд</h1>
+  <p>Нийт {{ orders|length }} захиалга</p>
+</div>
+
+<!-- Filter -->
+<div class="filter-row">
+  <a href="{% url 'core:panel_orders' %}"
+     class="filter-btn {% if not status_filter %}active{% endif %}">Бүгд</a>
+  {% for val, label in status_choices %}
+  <a href="{% url 'core:panel_orders' %}?status={{ val }}"
+     class="filter-btn {% if status_filter == val %}active{% endif %}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="panel-card">
+  <table class="panel-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Нэр</th>
+        <th>Утас</th>
+        <th>Хаяг</th>
+        <th>Нийт</th>
+        <th>Төлөв</th>
+        <th>Огноо</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+      <tr>
+        <td><a href="{% url 'core:panel_order_detail' order_id=order.pk %}">#{{ order.pk }}</a></td>
+        <td>{{ order.customer_name }}</td>
+        <td>{{ order.customer_phone }}</td>
+        <td style="font-size:.82rem;color:rgba(232,240,233,.6);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ order.address }}</td>
+        <td style="font-weight:700;color:#7ec850">₮{{ order.total_price|floatformat:0 }}</td>
+        <td><span class="s-badge s-{{ order.status }}">{{ order.get_status_display }}</span></td>
+        <td style="color:rgba(232,240,233,.5);font-size:.82rem">{{ order.created_at|date:"Y.m.d H:i" }}</td>
+        <td>
+          <a href="{% url 'core:panel_order_detail' order_id=order.pk %}" class="btn-p btn-p-ghost"
+             style="font-size:.78rem;padding:5px 12px">Харах</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" style="text-align:center;padding:40px;color:rgba(232,240,233,.35)">Захиалга олдсонгүй</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Захиалга баталгаажлаа — Чацаргана{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/order.css' %}" />
+{% if order.latitude %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="order-page">
+  <div class="order-container">
+
+    <!-- Hero -->
+    <div class="confirm-hero">
+      <div class="confirm-icon">✓</div>
+      <h1>Захиалга амжилттай!</h1>
+      <p>Таны захиалгыг хүлээн авлаа. Удахгүй холбоо барина.</p>
+      <div class="confirm-order-id">Захиалга #{{ order.pk }}</div>
+    </div>
+
+    <!-- Details -->
+    <div class="confirm-details">
+      <div class="detail-card">
+        <h4>Захиалагч</h4>
+        <div class="detail-row"><span class="dk">Нэр</span><span class="dv">{{ order.customer_name }}</span></div>
+        <div class="detail-row"><span class="dk">Утас</span><span class="dv">{{ order.customer_phone }}</span></div>
+        {% if order.customer_email %}
+        <div class="detail-row"><span class="dk">И-мэйл</span><span class="dv">{{ order.customer_email }}</span></div>
+        {% endif %}
+        <div class="detail-row"><span class="dk">Хаяг</span><span class="dv">{{ order.address }}</span></div>
+        {% if order.note %}
+        <div class="detail-row"><span class="dk">Тэмдэглэл</span><span class="dv">{{ order.note }}</span></div>
+        {% endif %}
+      </div>
+
+      <div class="detail-card">
+        <h4>Захиалгын мэдээлэл</h4>
+        <div class="detail-row">
+          <span class="dk">Төлөв</span>
+          <span class="dv">
+            <span class="status-badge" style="background:{{ order.status_color }}">{{ order.get_status_display }}</span>
+          </span>
+        </div>
+        <div class="detail-row"><span class="dk">Огноо</span><span class="dv">{{ order.created_at|date:"Y.m.d H:i" }}</span></div>
+        <div class="detail-row"><span class="dk">Нийт дүн</span><span class="dv" style="color:#7ec850;font-weight:700">₮{{ order.total_price|floatformat:0 }}</span></div>
+      </div>
+    </div>
+
+    <!-- Items -->
+    <div class="detail-card" style="margin-bottom:24px">
+      <h4 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:#7ec850;margin-bottom:14px">Захиалсан бүтээгдэхүүн</h4>
+      <table class="order-items-table">
+        <thead>
+          <tr>
+            <th>Бүтээгдэхүүн</th>
+            <th class="right">Үнэ</th>
+            <th class="right">Тоо</th>
+            <th class="right">Нийт</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items.all %}
+          <tr>
+            <td>{{ item.product_name }}</td>
+            <td class="right">₮{{ item.price|floatformat:0 }}</td>
+            <td class="right">{{ item.quantity }}</td>
+            <td class="sub">₮{{ item.subtotal|floatformat:0 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if order.latitude and order.longitude %}
+    <div class="detail-card" style="margin-bottom:24px">
+      <h4 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:#7ec850;margin-bottom:10px">Хүргэлтийн байршил</h4>
+      <div id="confirm-map" style="width:100%;height:220px;border-radius:12px;border:1px solid rgba(255,255,255,.1)"></div>
+    </div>
+    {% endif %}
+
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      {% if request.user.is_authenticated %}
+        <a href="{% url 'core:my_orders' %}" class="btn-outline">Миний захиалгууд</a>
+      {% endif %}
+      <a href="{% url 'core:products' %}" class="btn-order" style="display:inline-block;width:auto">Үргэлжлүүлэн дэлгүүрлэх</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if order.latitude and order.longitude %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('confirm-map', {zoomControl:true, scrollWheelZoom:false})
+            .setView([{{ order.latitude }}, {{ order.longitude }}], 15);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OSM',maxZoom:19}).addTo(map);
+L.marker([{{ order.latitude }}, {{ order.longitude }}], {
+  icon: L.divIcon({html:'<div style="font-size:2rem">📍</div>',iconSize:[32,32],iconAnchor:[16,32],className:''})
+}).addTo(map);
+</script>
+{% endif %}
+{% endblock %}

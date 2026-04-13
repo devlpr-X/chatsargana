@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'storages',
     'social_django',
     'core',
 ]
@@ -80,8 +81,21 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# ── Cloudflare R2 — Media storage ─────────────────────────────
+R2_ENDPOINT   = os.getenv('R2_ENDPOINT', '')
+R2_BUCKET     = os.getenv('R2_BUCKET', '')
+R2_ACCESS_KEY = os.getenv('R2_ACCESS_KEY', '')
+R2_SECRET_KEY = os.getenv('R2_SECRET_KEY', '')
+R2_PUBLIC_URL = os.getenv('R2_PUBLIC_URL', '').rstrip('/')
+
+if R2_BUCKET and R2_ACCESS_KEY:
+    # R2 тохируулагдсан үед — cloudflare-д хадгална
+    DEFAULT_FILE_STORAGE = 'core.storage.R2MediaStorage'
+    MEDIA_URL = f"{R2_PUBLIC_URL}/websites/chatsargana/"
+else:
+    # Local fallback (dev тохиргоогүй үед)
+    MEDIA_URL  = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -107,6 +121,15 @@ LOGOUT_REDIRECT_URL = '/'
 SOCIAL_AUTH_LOGIN_REDIRECT_URL   = '/'
 SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/'
 SOCIAL_AUTH_LOGIN_ERROR_URL      = '/login/'
+
+# ── Email (Gmail SMTP) ─────────────────────────────────────────
+EMAIL_BACKEND      = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST         = 'smtp.gmail.com'
+EMAIL_PORT         = 587
+EMAIL_USE_TLS      = True
+EMAIL_HOST_USER    = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER', 'noreply@chatsargana.mn')
 
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',

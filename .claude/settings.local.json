@@ -18,7 +18,11 @@
       "Bash(python manage.py makemigrations core)",
       "Bash(python manage.py check)",
       "Bash(pip install:*)",
-      "Bash(pip show:*)"
+      "Bash(pip show:*)",
+      "Bash(python manage.py makemigrations core --name password_reset_token)",
+      "Bash(python manage.py upload_to_r2 --dry-run)",
+      "Bash(python manage.py upload_to_r2)",
+      "Bash(curl:*)"
     ]
   }
 }

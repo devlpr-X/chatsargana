@@ -361,13 +361,31 @@ footer {
 .reveal-delay-4 { transition-delay: 0.4s; }
 
 /* ── Responsive ── */
-@media (max-width: 1024px) {
-  header { padding: 16px 24px; }
-  header.scrolled { padding: 12px 24px; }
-  nav ul { gap: 20px; }
+@media (max-width: 1200px) {
+  header { padding: 16px 36px; }
+  header.scrolled { padding: 12px 36px; }
+  nav ul { gap: 24px; }
+  nav ul li a {
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  header { padding: 14px 24px; }
+  header.scrolled { padding: 10px 24px; }
+  nav ul { gap: 14px; }
+  nav ul li a {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  nav ul li a.nav-cta {
+    padding: 8px 16px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 960px) {
   /* Hide desktop nav, show hamburger */
   #main-nav { display: none; }
   .nav-toggle { display: flex; }
@@ -453,6 +471,38 @@ footer {
     background: var(--amber-lt);
     padding-left: 24px;
   }
+
+  /* Бүртгүүлэх button (nav-cta-sm) mobile-д */
+  #main-nav.open ul li a.nav-cta-sm {
+    display: block;
+    text-align: center;
+    border: 1px solid rgba(126,200,80,.4);
+    border-radius: 12px;
+    padding: 12px 24px;
+    color: rgba(126,200,80,.9);
+    font-size: 13px;
+    letter-spacing: 1.5px;
+  }
+
+  /* User dropdown — mobile-д хавтгай жагсаалт болгох */
+  #main-nav.open .nav-user-menu .nav-dropdown {
+    display: block;
+    position: static;
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    min-width: unset;
+    border-radius: 0;
+  }
+  #main-nav.open .nav-user-menu .nav-dropdown li a {
+    padding: 14px 8px 14px 24px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: rgba(253,246,236,0.6);
+    text-transform: none;
+  }
+  #main-nav.open .nav-user-trigger { display: none; }
 
   /* Footer adjustments */
   .footer-inner { grid-template-columns: 1fr 1fr; gap: 36px; }

@@ -1,11 +1,15 @@
+import uuid
 from decimal import Decimal
 from functools import wraps
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.core.mail import send_mail
+from django.conf import settings
 from django.db.models import Sum
 from django.views.decorators.http import require_POST
 
@@ -16,6 +20,7 @@ from .models import (
     KeyNumber, BenefitDetail,
     MissionValue, ProcessStep,
     Order, OrderItem,
+    PasswordResetToken,
 )
 
 
@@ -343,12 +348,91 @@ def user_logout(request):
     return redirect('core:index')
 
 
+def password_reset_request(request):
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            # Аюулгүй байдлын үүднээс и-мэйл байгаа эсэхийг нуух
+            return render(request, 'password_reset_request.html', {'sent': True})
+
+        # Хуучин токенуудыг хүчингүй болгох
+        PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+
+        token = PasswordResetToken.objects.create(user=user)
+        reset_url = request.build_absolute_uri(f'/reset-password/confirm/?token={token.token}')
+
+        try:
+            send_mail(
+                subject='Нууц үг сэргээх — Чацаргана',
+                message=(
+                    f'Сайн байна уу!\n\n'
+                    f'Та доорх холбоосоор орж нууц үгээ шинэчлэх боломжтой:\n\n'
+                    f'{reset_url}\n\n'
+                    f'Энэ холбоос 1 цагийн дотор хүчинтэй.\n\n'
+                    f'Хэрэв та энэ хүсэлтийг гаргаагүй бол энэ мэйлийг үл тоомсорлоно уу.\n\n'
+                    f'— Чацаргана баг'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+        except Exception:
+            return render(request, 'password_reset_request.html', {
+                'error': 'И-мэйл илгээхэд алдаа гарлаа. Дахин оролдоно уу.'
+            })
+
+        return render(request, 'password_reset_request.html', {'sent': True})
+
+    return render(request, 'password_reset_request.html', {})
+
+
+def password_reset_confirm(request):
+    token_str = request.GET.get('token') or request.POST.get('token', '')
+    error = None
+    token_obj = None
+
+    try:
+        token_obj = PasswordResetToken.objects.select_related('user').get(
+            token=uuid.UUID(str(token_str))
+        )
+        if not token_obj.is_valid():
+            error = 'Холбоосын хугацаа дууссан эсвэл ашигласан байна. Дахин хүсэлт илгээнэ үү.'
+            token_obj = None
+    except (PasswordResetToken.DoesNotExist, ValueError, TypeError, AttributeError):
+        error = 'Буруу эсвэл хүчингүй холбоос байна.'
+
+    if request.method == 'POST' and token_obj:
+        password1 = request.POST.get('password1', '')
+        password2 = request.POST.get('password2', '')
+
+        if not password1:
+            error = 'Нууц үг оруулна уу'
+        elif len(password1) < 6:
+            error = 'Нууц үг хамгийн багадаа 6 тэмдэгт байх ёстой'
+        elif password1 != password2:
+            error = 'Нууц үг таарахгүй байна'
+        else:
+            user = token_obj.user
+            user.set_password(password1)
+            user.save()
+            token_obj.used = True
+            token_obj.save()
+            return render(request, 'password_reset_confirm.html', {'success': True})
+
+    return render(request, 'password_reset_confirm.html', {
+        'token':       token_str,
+        'token_valid': token_obj is not None,
+        'error':       error,
+    })
+
+
 def user_register(request):
     if request.user.is_authenticated:
         return redirect('core:index')
     errors = {}
     if request.method == 'POST':
-        from django.contrib.auth.models import User
         email     = request.POST.get('email', '').strip()
         password1 = request.POST.get('password1', '')
         password2 = request.POST.get('password2', '')

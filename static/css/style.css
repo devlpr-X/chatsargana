@@ -439,10 +439,12 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  border-radius: 20px;
 }
 .prod-img-wrap img {
   height: 140px;
   object-fit: contain;
+  border-radius: 20px;
   transition: var(--transition);
   filter: drop-shadow(0 8px 20px rgba(232,124,12,0.2));
 }

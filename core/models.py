@@ -1,5 +1,8 @@
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
 
 
 # ─────────────────────────────────────────────────────────────
@@ -278,6 +281,26 @@ class Order(models.Model):
 
     def status_color(self):
         return self.STATUS_COLORS.get(self.status, '#6b7280')
+
+
+# ─────────────────────────────────────────────────────────────
+#  Password reset tokens
+# ─────────────────────────────────────────────────────────────
+class PasswordResetToken(models.Model):
+    user       = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Хэрэглэгч")
+    token      = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    used       = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name        = "Нууц үг сэргээх токен"
+        verbose_name_plural = "Нууц үг сэргээх токенүүд"
+
+    def __str__(self):
+        return f"{self.user.email} — {'ашигласан' if self.used else 'хүчинтэй'}"
+
+    def is_valid(self):
+        return not self.used and (timezone.now() - self.created_at) < timedelta(hours=1)
 
 
 class OrderItem(models.Model):

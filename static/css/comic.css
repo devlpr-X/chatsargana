@@ -113,6 +113,7 @@
   overflow: hidden;
   cursor: zoom-in;
   flex-shrink: 0;
+  border-radius: 20px;
 }
 /* For featured, give it a taller feel */
 .product-featured .pi-visual {
@@ -129,6 +130,7 @@
   filter: blur(18px) brightness(0.55) saturate(1.4);
   transform: scale(1.05); /* prevent blur edge bleed */
   transition: filter 0.4s ease;
+  border-radius: 20px;
 }
 .product-item:hover .pi-blur-bg {
   filter: blur(14px) brightness(0.65) saturate(1.6);
@@ -143,7 +145,9 @@
   object-fit: contain;
   object-position: center;
   padding: 18px;
-  transition: transform 0.4s ease, filter 0.4s ease;
+  /* clip-path нь padding хилд хайчилдаг тул зургийн булан дугуйлна */
+  clip-path: inset(18px round 16px);
+  transition: transform 0.4s ease, filter 0.4s ease, clip-path 0.4s ease;
   filter: drop-shadow(0 8px 24px rgba(0,0,0,0.4));
   z-index: 2;
 }
@@ -151,7 +155,7 @@
   transform: scale(1.06);
   filter: drop-shadow(0 12px 32px rgba(232,124,12,0.3));
 }
-.product-featured .pi-img { padding: 24px; }
+.product-featured .pi-img { padding: 24px; clip-path: inset(24px round 16px); }
 
 /* Zoom hint label */
 .pi-zoom-hint {

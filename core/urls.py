@@ -18,9 +18,11 @@ urlpatterns = [
     path('cart/update/<int:product_id>/', views.cart_update, name='cart_update'),
 
     # ── User auth ─────────────────────────────────────────────
-    path('login/',    views.user_login,    name='login'),
-    path('logout/',   views.user_logout,   name='logout'),
-    path('register/', views.user_register, name='register'),
+    path('login/',                      views.user_login,             name='login'),
+    path('logout/',                     views.user_logout,            name='logout'),
+    path('register/',                   views.user_register,          name='register'),
+    path('reset-password/',             views.password_reset_request, name='password_reset_request'),
+    path('reset-password/confirm/',     views.password_reset_confirm, name='password_reset_confirm'),
 
     # ── Orders ────────────────────────────────────────────────
     path('checkout/',                     views.checkout,      name='checkout'),

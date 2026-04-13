@@ -333,13 +333,17 @@ def user_login(request):
         return redirect('core:index')
     error = None
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
+        email = request.POST.get('username', '').strip().lower()
         password = request.POST.get('password', '')
-        user = authenticate(request, username=username, password=password)
+        try:
+            user_obj = User.objects.get(email__iexact=email)
+            user = authenticate(request, username=user_obj.username, password=password)
+        except User.DoesNotExist:
+            user = None
         if user:
             login(request, user)
             return redirect(request.GET.get('next', '/'))
-        error = 'Нэвтрэх нэр эсвэл нууц үг буруу байна'
+        error = 'И-мэйл эсвэл нууц үг буруу байна'
     return render(request, 'user_login.html', {'error': error})
 
 

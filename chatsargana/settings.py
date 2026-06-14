@@ -1,16 +1,26 @@
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / '.env')
 
-# SECURITY — change this in production!
-SECRET_KEY = 'django-insecure-chatsargana-local-dev-key-change-in-production'
+# SECURITY — production values come from environment (.env / Railway variables)
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-chatsargana-local-dev-key-change-in-production')
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('1', 'true', 'yes', 'on')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*').split(',') if h.strip()]
+
+# CSRF — production HTTPS domain must be trusted for POST forms + inline-edit API
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
+_railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN', '')
+if _railway_domain:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{_railway_domain}')
+
+# Railway terminates TLS at its edge proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -19,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'storages',
     'social_django',
     'core',
@@ -26,6 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -59,10 +71,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'chatsargana.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -88,9 +101,19 @@ R2_ACCESS_KEY = os.getenv('R2_ACCESS_KEY', '')
 R2_SECRET_KEY = os.getenv('R2_SECRET_KEY', '')
 R2_PUBLIC_URL = os.getenv('R2_PUBLIC_URL', '').rstrip('/')
 
+# Django 4.2+ STORAGES API (DEFAULT_FILE_STORAGE was removed in Django 5.1)
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
+
 if R2_BUCKET and R2_ACCESS_KEY:
     # R2 тохируулагдсан үед — cloudflare-д хадгална
-    DEFAULT_FILE_STORAGE = 'core.storage.R2MediaStorage'
+    STORAGES['default']['BACKEND'] = 'core.storage.R2MediaStorage'
     MEDIA_URL = f"{R2_PUBLIC_URL}/websites/chatsargana/"
 else:
     # Local fallback (dev тохиргоогүй үед)

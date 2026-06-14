@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Сагс — Чацаргана{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/order.css' %}" />{% endblock %}
@@ -22,14 +23,14 @@
           <div>
             <div class="ci-name">{{ item.name }}</div>
             <div class="ci-unit">{{ item.unit }}</div>
-            <div class="ci-price">₮{{ item.price|floatformat:0 }} / нэгж</div>
+            <div class="ci-price">₮{{ item.price|floatformat:0|intcomma }} / нэгж</div>
           </div>
           <div class="ci-qty">
             <button type="button" class="qty-dec" data-id="{{ item.id }}">−</button>
             <span class="ci-qty-num" id="qty-{{ item.id }}">{{ item.qty }}</span>
             <button type="button" class="qty-inc" data-id="{{ item.id }}">+</button>
           </div>
-          <div class="ci-subtotal" id="sub-{{ item.id }}">₮{{ item.subtotal|floatformat:0 }}</div>
+          <div class="ci-subtotal" id="sub-{{ item.id }}">₮{{ item.subtotal|floatformat:0|intcomma }}</div>
           <button type="button" class="ci-remove" data-id="{{ item.id }}" title="Устгах">✕</button>
         </div>
         {% endfor %}
@@ -38,7 +39,7 @@
       <div class="cart-footer">
         <div class="cart-total-block">
           <div class="label">Нийт дүн</div>
-          <div class="amount" id="cart-total">₮{{ total|floatformat:0 }}</div>
+          <div class="amount" id="cart-total">₮{{ total|floatformat:0|intcomma }}</div>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           <a href="{% url 'core:products' %}" class="btn-outline">← Үргэлжлүүлэн дэлгүүрлэх</a>
@@ -89,9 +90,9 @@ document.querySelectorAll('.qty-dec, .qty-inc').forEach(btn => {
         document.getElementById('row-' + id).remove();
       } else {
         numEl.textContent = qty;
-        document.getElementById('sub-' + id).textContent = '₮' + Number(d.subtotal).toLocaleString();
+        document.getElementById('sub-' + id).textContent = '₮' + Number(d.subtotal).toLocaleString('en-US');
       }
-      document.getElementById('cart-total').textContent = '₮' + Number(d.cart_total).toLocaleString();
+      document.getElementById('cart-total').textContent = '₮' + Number(d.cart_total).toLocaleString('en-US');
       updateCartBadge(d.cart_count);
       if (d.cart_count === 0) location.reload();
     }
@@ -104,7 +105,7 @@ document.querySelectorAll('.ci-remove').forEach(btn => {
     const d = await postJSON(`/cart/remove/${id}/`, {});
     if (d.ok) {
       document.getElementById('row-' + id).remove();
-      document.getElementById('cart-total').textContent = '₮' + Number(d.cart_total).toLocaleString();
+      document.getElementById('cart-total').textContent = '₮' + Number(d.cart_total).toLocaleString('en-US');
       updateCartBadge(d.cart_count);
       if (d.cart_count === 0) location.reload();
     }

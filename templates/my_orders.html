@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Миний захиалгууд — Чацаргана{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/order.css' %}" />{% endblock %}
@@ -26,7 +27,7 @@
             <div>
               <span class="status-badge" style="background:{{ order.status_color }}">{{ order.get_status_display }}</span>
             </div>
-            <div class="or-total" style="margin-top:6px">₮{{ order.total_price|floatformat:0 }}</div>
+            <div class="or-total" style="margin-top:6px">₮{{ order.total_price|floatformat:0|intcomma }}</div>
           </div>
         </a>
         {% endfor %}

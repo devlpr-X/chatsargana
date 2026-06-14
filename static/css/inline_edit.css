@@ -1,0 +1,184 @@
+/* ─── Inline Edit (admin in-page editing) ─────────────── */
+
+.ie-target {
+  position: relative;
+  outline: 1px dashed rgba(232, 124, 12, 0);
+  outline-offset: 4px;
+  transition: outline-color 0.2s;
+}
+.ie-target:hover {
+  outline-color: rgba(232, 124, 12, 0.55);
+}
+.ie-editing {
+  outline: 2px solid rgba(126, 200, 80, 0.9) !important;
+  background: rgba(126, 200, 80, 0.06);
+  cursor: text;
+}
+
+.ie-target [contenteditable="true"]:focus {
+  outline: none;
+}
+
+/* Edit button overlay (top-right of element) */
+.ie-ctl {
+  position: absolute;
+  top: -14px;
+  right: -10px;
+  z-index: 50;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+.ie-target:hover > .ie-ctl,
+.ie-editing > .ie-ctl,
+.ie-ctl-bar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ie-btn {
+  appearance: none;
+  border: 1px solid rgba(232, 124, 12, 0.6);
+  background: #1e2c1c;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: background 0.15s, transform 0.15s;
+}
+.ie-btn:hover {
+  background: #e87c0c;
+  border-color: #e87c0c;
+  transform: translateY(-1px);
+}
+.ie-edit-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ie-save {
+  background: #7ec850;
+  border-color: #7ec850;
+}
+.ie-save:hover {
+  background: #5fb533;
+  border-color: #5fb533;
+}
+.ie-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ie-cancel {
+  background: #4a2828;
+  border-color: rgba(255, 100, 100, 0.6);
+}
+
+/* Save / Cancel bar appears at the bottom of editing element */
+.ie-ctl-bar {
+  position: absolute;
+  bottom: -44px;
+  right: 0;
+  top: auto;
+  display: flex;
+  gap: 8px;
+}
+
+/* Image edit specific */
+.ie-image-target {
+  position: relative;
+}
+.ie-img-ctl {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  top: auto;
+  left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.ie-image-target:hover > .ie-img-ctl {
+  opacity: 1;
+  pointer-events: auto;
+}
+.ie-img-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Toast */
+.ie-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 24px);
+  background: #1e2c1c;
+  color: #fff;
+  border: 1px solid rgba(126, 200, 80, 0.6);
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 10000;
+  pointer-events: none;
+}
+.ie-toast.ie-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.ie-toast.ie-err {
+  border-color: rgba(255, 100, 100, 0.7);
+  background: #4a2828;
+}
+
+/* Edit mode badge (bottom-left floating) */
+.ie-badge {
+  position: fixed;
+  bottom: 18px;
+  left: 18px;
+  z-index: 9999;
+  background: rgba(30, 44, 28, 0.92);
+  border: 1px solid rgba(232, 124, 12, 0.55);
+  color: #fdf6ec;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+.ie-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e87c0c;
+  box-shadow: 0 0 8px rgba(232, 124, 12, 0.8);
+  animation: ie-pulse 1.5s infinite;
+}
+@keyframes ie-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(1.25); }
+}

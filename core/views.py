@@ -513,6 +513,76 @@ def panel_orders(request):
     return render(request, 'panel_orders.html', context)
 
 
+# ─────────────────────────────────────────────────────────────
+#  Inline edit (admin in-page editing)
+# ─────────────────────────────────────────────────────────────
+INLINE_EDITABLE = {
+    # SiteContent is keyed by string `key`, value lives in `value`
+    'sitecontent':   {'model': SiteContent,   'pk': 'key', 'fields': {'value': 'text'}},
+    'herostat':      {'model': HeroStat,      'fields': {'num': 'text', 'label': 'text'}},
+    'feature':       {'model': Feature,       'fields': {'icon': 'text', 'title': 'text', 'description': 'text'}},
+    'aboutcard':     {'model': AboutCard,     'fields': {'value': 'text', 'label': 'text'}},
+    'benefitteaser': {'model': BenefitTeaser, 'fields': {'icon': 'text', 'title': 'text', 'description': 'text'}},
+    'nutrientcard':  {'model': NutrientCard,  'fields': {'letter': 'text', 'title': 'text', 'value_text': 'text', 'note': 'text', 'bar_pct': 'int'}},
+    'usagecard':     {'model': UsageCard,     'fields': {'icon': 'text', 'title': 'text', 'description': 'text', 'image': 'image'}},
+    'keynumber':     {'model': KeyNumber,     'fields': {'num': 'text', 'label': 'text'}},
+    'benefitdetail': {'model': BenefitDetail, 'fields': {'icon': 'text', 'number': 'text', 'title': 'text', 'description': 'text', 'tags': 'text'}},
+    'missionvalue':  {'model': MissionValue,  'fields': {'icon': 'text', 'title': 'text', 'description': 'text'}},
+    'processstep':   {'model': ProcessStep,   'fields': {'number': 'text', 'icon': 'text', 'title': 'text', 'description': 'text'}},
+    'product':       {'model': Product,       'fields': {'name': 'text', 'description': 'text', 'price': 'int', 'unit': 'text', 'image': 'image', 'badge_icon': 'text'}},
+}
+
+
+@require_POST
+def inline_edit(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+    model_name = request.POST.get('model', '').lower()
+    pk        = request.POST.get('pk', '')
+    field     = request.POST.get('field', '')
+
+    spec = INLINE_EDITABLE.get(model_name)
+    if not spec:
+        return JsonResponse({'ok': False, 'error': f'Model "{model_name}" not allowed'}, status=400)
+
+    field_type = spec['fields'].get(field)
+    if not field_type:
+        return JsonResponse({'ok': False, 'error': f'Field "{field}" not allowed'}, status=400)
+
+    Model = spec['model']
+    pk_field = spec.get('pk', 'pk')
+
+    if pk_field == 'key':
+        # SiteContent — create if missing so admins can add new content
+        obj, _ = Model.objects.get_or_create(key=pk, defaults={'value': ''})
+    else:
+        try:
+            obj = Model.objects.get(pk=pk)
+        except Model.DoesNotExist:
+            return JsonResponse({'ok': False, 'error': 'Object not found'}, status=404)
+
+    if field_type == 'image':
+        f = request.FILES.get('value')
+        if not f:
+            return JsonResponse({'ok': False, 'error': 'No image uploaded'}, status=400)
+        setattr(obj, field, f)
+        obj.save()
+        img_field = getattr(obj, field)
+        return JsonResponse({'ok': True, 'image_url': img_field.url if img_field else ''})
+
+    value = request.POST.get('value', '')
+    if field_type == 'int':
+        try:
+            value = int(str(value).replace(',', '').strip())
+        except (ValueError, TypeError):
+            return JsonResponse({'ok': False, 'error': 'Invalid integer'}, status=400)
+
+    setattr(obj, field, value)
+    obj.save()
+    return JsonResponse({'ok': True, 'value': str(getattr(obj, field))})
+
+
 @panel_required
 def panel_order_detail(request, order_id):
     order = get_object_or_404(Order, pk=order_id)

@@ -7,6 +7,7 @@
   <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
   <link rel="stylesheet" href="{% static 'css/global.css' %}" />
   <link rel="stylesheet" href="{% static 'css/order.css' %}" />
+  {% if request.user.is_staff %}<link rel="stylesheet" href="{% static 'css/inline_edit.css' %}" />{% endif %}
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -103,6 +104,10 @@
 </footer>
 
 <script src="{% static 'js/main.js' %}"></script>
+{% if request.user.is_staff %}
+<script>window.IS_STAFF = true;</script>
+<script src="{% static 'js/inline_edit.js' %}"></script>
+{% endif %}
 {% block extra_js %}{% endblock %}
 </body>
 </html>

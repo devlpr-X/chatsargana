@@ -180,7 +180,14 @@ class NutrientCard(models.Model):
 #  Info page — Usage cards
 # ─────────────────────────────────────────────────────────────
 class UsageCard(models.Model):
-    icon = models.CharField(max_length=10, verbose_name="Emoji дүрс")
+    image = models.ImageField(
+        upload_to='usage_cards/', blank=True, null=True,
+        verbose_name="Зураг (нэн тэргүүн харагдана)"
+    )
+    icon = models.CharField(
+        max_length=10, blank=True,
+        verbose_name="Emoji дүрс (зураг байхгүй үед харагдана)"
+    )
     title = models.CharField(max_length=120, verbose_name="Гарчиг")
     description = models.CharField(max_length=255, verbose_name="Тайлбар")
     order = models.PositiveSmallIntegerField(default=0, verbose_name="Дараалал")

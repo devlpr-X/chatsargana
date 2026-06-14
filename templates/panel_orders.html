@@ -1,4 +1,5 @@
 {% extends 'panel_base.html' %}
+{% load humanize %}
 
 {% block title %}Захиалгууд{% endblock %}
 {% block topbar_title %}Захиалгууд{% endblock %}
@@ -42,7 +43,7 @@
         <td>{{ order.customer_name }}</td>
         <td>{{ order.customer_phone }}</td>
         <td style="font-size:.82rem;color:rgba(232,240,233,.6);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ order.address }}</td>
-        <td style="font-weight:700;color:#7ec850">₮{{ order.total_price|floatformat:0 }}</td>
+        <td style="font-weight:700;color:#7ec850">₮{{ order.total_price|floatformat:0|intcomma }}</td>
         <td><span class="s-badge s-{{ order.status }}">{{ order.get_status_display }}</span></td>
         <td style="color:rgba(232,240,233,.5);font-size:.82rem">{{ order.created_at|date:"Y.m.d H:i" }}</td>
         <td>

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Захиалга баталгаажлаа — Чацаргана{% endblock %}
 
@@ -46,7 +47,7 @@
           </span>
         </div>
         <div class="detail-row"><span class="dk">Огноо</span><span class="dv">{{ order.created_at|date:"Y.m.d H:i" }}</span></div>
-        <div class="detail-row"><span class="dk">Нийт дүн</span><span class="dv" style="color:#7ec850;font-weight:700">₮{{ order.total_price|floatformat:0 }}</span></div>
+        <div class="detail-row"><span class="dk">Нийт дүн</span><span class="dv" style="color:#7ec850;font-weight:700">₮{{ order.total_price|floatformat:0|intcomma }}</span></div>
       </div>
     </div>
 
@@ -66,9 +67,9 @@
           {% for item in order.items.all %}
           <tr>
             <td>{{ item.product_name }}</td>
-            <td class="right">₮{{ item.price|floatformat:0 }}</td>
+            <td class="right">₮{{ item.price|floatformat:0|intcomma }}</td>
             <td class="right">{{ item.quantity }}</td>
-            <td class="sub">₮{{ item.subtotal|floatformat:0 }}</td>
+            <td class="sub">₮{{ item.subtotal|floatformat:0|intcomma }}</td>
           </tr>
           {% endfor %}
         </tbody>

@@ -35,4 +35,7 @@ urlpatterns = [
     path('panel/',                                 views.panel_dashboard,    name='panel_dashboard'),
     path('panel/orders/',                          views.panel_orders,       name='panel_orders'),
     path('panel/orders/<int:order_id>/',           views.panel_order_detail, name='panel_order_detail'),
+
+    # ── Inline edit API ───────────────────────────────────────
+    path('panel/api/inline/',                      views.inline_edit,        name='inline_edit'),
 ]

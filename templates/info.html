@@ -18,7 +18,7 @@
   <div class="page-hero-content">
     <p class="section-label">Танилцуулга</p>
     <h1 class="page-title">Чацаргана<br><em>гэж юу вэ?</em></h1>
-    <p class="page-subtitle">{{ hero_subtitle }}</p>
+    <p class="page-subtitle" data-sc="info_hero_subtitle">{{ hero_subtitle }}</p>
   </div>
   <div class="ph-scroll-line"></div>
 </section>
@@ -27,12 +27,15 @@
 <section class="intro-story">
   <div class="story-inner">
     <div class="story-text reveal">
-      <p class="section-label">{{ story_label }}</p>
-      <h2 class="section-title">{{ story_title_1 }}<br><em>{{ story_title_2 }}</em></h2>
+      <p class="section-label" data-sc="info_story_label">{{ story_label }}</p>
+      <h2 class="section-title">
+        <span data-sc="info_story_title_1">{{ story_title_1 }}</span><br>
+        <em data-sc="info_story_title_2">{{ story_title_2 }}</em>
+      </h2>
       <div class="story-body">
-        <p>{{ story_body_1|safe }}</p>
-        <p>{{ story_body_2|safe }}</p>
-        <p>{{ story_body_3|safe }}</p>
+        <p data-sc="info_story_body_1">{{ story_body_1|safe }}</p>
+        <p data-sc="info_story_body_2">{{ story_body_2|safe }}</p>
+        <p data-sc="info_story_body_3">{{ story_body_3|safe }}</p>
       </div>
     </div>
     <div class="story-visual reveal reveal-delay-2">
@@ -43,8 +46,8 @@
         <div class="img-decoration img-dec-2"></div>
       </div>
       <div class="story-fact-card">
-        <div class="fact-num">{{ fact_num }}</div>
-        <div class="fact-text">{{ fact_text }}</div>
+        <div class="fact-num" data-sc="info_fact_num">{{ fact_num }}</div>
+        <div class="fact-text" data-sc="info_fact_text">{{ fact_text }}</div>
       </div>
     </div>
   </div>
@@ -56,20 +59,20 @@
     <div class="nutrition-header reveal">
       <p class="section-label">Найрлага</p>
       <h2 class="section-title">Шим тэжээлийн <em>баялаг найрлага</em></h2>
-      <p class="nutrition-sub">{{ nutrition_sub }}</p>
+      <p class="nutrition-sub" data-sc="info_nutrition_sub">{{ nutrition_sub }}</p>
     </div>
     <div class="nutrition-grid">
       {% for nc in nutrient_cards %}
         <div class="nutrient-card reveal reveal-delay-{{ forloop.counter }}">
           <div class="nc-top">
-            <span class="nc-letter">{{ nc.letter }}</span>
+            <span class="nc-letter" data-edit="nutrientcard.{{ nc.id }}.letter">{{ nc.letter }}</span>
             <div class="nc-bar-wrap">
               <div class="nc-bar" style="--pct:{{ nc.bar_pct }}%"></div>
             </div>
           </div>
-          <h4>{{ nc.title }}</h4>
-          <p class="nc-value">{{ nc.value_text }}</p>
-          <p class="nc-note">{{ nc.note }}</p>
+          <h4 data-edit="nutrientcard.{{ nc.id }}.title">{{ nc.title }}</h4>
+          <p class="nc-value" data-edit="nutrientcard.{{ nc.id }}.value_text">{{ nc.value_text }}</p>
+          <p class="nc-note" data-edit="nutrientcard.{{ nc.id }}.note">{{ nc.note }}</p>
         </div>
       {% endfor %}
     </div>
@@ -86,9 +89,20 @@
     <div class="usage-grid">
       {% for uc in usage_cards %}
         <div class="usage-card reveal reveal-delay-{{ forloop.counter }}">
-          <div class="uc-icon">{{ uc.icon }}</div>
-          <h4>{{ uc.title }}</h4>
-          <p>{{ uc.description }}</p>
+          {% if request.user.is_staff %}
+            <div class="uc-image" data-edit="usagecard.{{ uc.id }}.image" data-edit-type="image">
+              {% if uc.image %}<img src="{{ uc.image.url }}" alt="{{ uc.title }}" />{% endif %}
+            </div>
+            {% if not uc.image %}<div class="uc-icon" data-edit="usagecard.{{ uc.id }}.icon">{{ uc.icon }}</div>{% endif %}
+          {% else %}
+            {% if uc.image %}
+              <div class="uc-image"><img src="{{ uc.image.url }}" alt="{{ uc.title }}" /></div>
+            {% else %}
+              <div class="uc-icon">{{ uc.icon }}</div>
+            {% endif %}
+          {% endif %}
+          <h4 data-edit="usagecard.{{ uc.id }}.title">{{ uc.title }}</h4>
+          <p data-edit="usagecard.{{ uc.id }}.description">{{ uc.description }}</p>
         </div>
       {% endfor %}
     </div>
@@ -99,7 +113,7 @@
 <section class="info-cta">
   <div class="info-cta-inner reveal">
     <h2 class="section-title">Бүтээгдэхүүнээ<br><em>сонгоно уу</em></h2>
-    <p>{{ cta_body }}</p>
+    <p data-sc="info_cta_body">{{ cta_body }}</p>
     <a href="{% url 'core:products' %}" class="btn btn-primary">
       Бүтээгдэхүүн үзэх <span class="arrow-icon"></span>
     </a>

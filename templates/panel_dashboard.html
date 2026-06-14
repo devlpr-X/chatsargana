@@ -1,4 +1,5 @@
 {% extends 'panel_base.html' %}
+{% load humanize %}
 
 {% block title %}Самбар{% endblock %}
 {% block topbar_title %}Самбар{% endblock %}
@@ -35,7 +36,7 @@
   </div>
   <div class="stat-card accent">
     <div class="sc-label">Нийт орлого</div>
-    <div class="sc-value" style="font-size:1.4rem">₮{{ total_revenue|floatformat:0 }}</div>
+    <div class="sc-value" style="font-size:1.4rem">₮{{ total_revenue|floatformat:0|intcomma }}</div>
     <div class="sc-sub">баталгаажсан + хүргэсэн</div>
   </div>
 </div>
@@ -68,7 +69,7 @@
           {% for item in order.items.all|slice:":2" %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
           {% if order.items.count > 2 %}…{% endif %}
         </td>
-        <td style="font-weight:700;color:#7ec850">₮{{ order.total_price|floatformat:0 }}</td>
+        <td style="font-weight:700;color:#7ec850">₮{{ order.total_price|floatformat:0|intcomma }}</td>
         <td><span class="s-badge s-{{ order.status }}">{{ order.get_status_display }}</span></td>
         <td style="color:rgba(232,240,233,.5);font-size:.82rem">{{ order.created_at|date:"m.d H:i" }}</td>
       </tr>

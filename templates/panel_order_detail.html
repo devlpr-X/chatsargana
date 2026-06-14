@@ -1,4 +1,5 @@
 {% extends 'panel_base.html' %}
+{% load humanize %}
 
 {% block title %}Захиалга #{{ order.pk }}{% endblock %}
 {% block topbar_title %}Захиалга #{{ order.pk }}{% endblock %}
@@ -57,7 +58,7 @@
   <div class="detail-section">
     <h3>Захиалга</h3>
     <div class="detail-row"><span class="dk">Огноо</span><span class="dv">{{ order.created_at|date:"Y.m.d H:i" }}</span></div>
-    <div class="detail-row"><span class="dk">Нийт дүн</span><span class="dv" style="color:#7ec850;font-weight:700">₮{{ order.total_price|floatformat:0 }}</span></div>
+    <div class="detail-row"><span class="dk">Нийт дүн</span><span class="dv" style="color:#7ec850;font-weight:700">₮{{ order.total_price|floatformat:0|intcomma }}</span></div>
     <div class="detail-row"><span class="dk">Зүйлс</span><span class="dv">{{ order.items.count }} төрөл</span></div>
   </div>
 
@@ -92,14 +93,14 @@
       {% for item in order.items.all %}
       <tr>
         <td>{{ item.product_name }}</td>
-        <td>₮{{ item.price|floatformat:0 }}</td>
+        <td>₮{{ item.price|floatformat:0|intcomma }}</td>
         <td>{{ item.quantity }}</td>
-        <td style="font-weight:700;color:#7ec850">₮{{ item.subtotal|floatformat:0 }}</td>
+        <td style="font-weight:700;color:#7ec850">₮{{ item.subtotal|floatformat:0|intcomma }}</td>
       </tr>
       {% endfor %}
       <tr>
         <td colspan="3" style="text-align:right;font-weight:600;padding-top:12px">Нийт дүн:</td>
-        <td style="font-size:1.1rem;font-weight:800;color:#7ec850;padding-top:12px">₮{{ order.total_price|floatformat:0 }}</td>
+        <td style="font-size:1.1rem;font-weight:800;color:#7ec850;padding-top:12px">₮{{ order.total_price|floatformat:0|intcomma }}</td>
       </tr>
     </tbody>
   </table>

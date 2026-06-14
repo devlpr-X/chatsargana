@@ -19,7 +19,7 @@
   <div class="ah-content">
     <p class="section-label">Бидний тухай</p>
     <h1 class="ah-title">УВС <em>Чацаргана</em></h1>
-    <p class="ah-sub">{{ hero_sub }}</p>
+    <p class="ah-sub" data-sc="about_hero_sub">{{ hero_sub }}</p>
   </div>
 </section>
 
@@ -29,15 +29,15 @@
     <div class="mission-text reveal">
       <p class="section-label">Манай эрхэм зорилго</p>
       <h2 class="section-title">Байгалиас <em>биед</em><br>хүртэл</h2>
-      <p class="mission-body">{{ mission_body_1 }}</p>
-      <p class="mission-body">{{ mission_body_2 }}</p>
+      <p class="mission-body" data-sc="about_mission_body_1">{{ mission_body_1 }}</p>
+      <p class="mission-body" data-sc="about_mission_body_2">{{ mission_body_2 }}</p>
       <div class="mission-values">
         {% for mv in mission_values %}
           <div class="mv-item">
-            <span class="mv-icon">{{ mv.icon }}</span>
+            <span class="mv-icon" data-edit="missionvalue.{{ mv.id }}.icon">{{ mv.icon }}</span>
             <div>
-              <strong>{{ mv.title }}</strong>
-              <p>{{ mv.description }}</p>
+              <strong data-edit="missionvalue.{{ mv.id }}.title">{{ mv.title }}</strong>
+              <p data-edit="missionvalue.{{ mv.id }}.description">{{ mv.description }}</p>
             </div>
           </div>
         {% endfor %}
@@ -49,9 +49,9 @@
           <span class="mvc-icon">🌾</span>
           <h4>Байгалийн эрдэнэс</h4>
         </div>
-        <p>{{ card_big_text }}</p>
+        <p data-sc="about_card_big_text">{{ card_big_text }}</p>
         <div class="mvc-stat">
-          <span class="mvc-n">{{ card_year }}</span>
+          <span class="mvc-n" data-sc="about_card_year">{{ card_year }}</span>
           <span class="mvc-l">онд үйл ажиллагаа явуулж байна</span>
         </div>
       </div>
@@ -81,10 +81,10 @@
     <div class="process-steps">
       {% for step in process_steps %}
         <div class="process-step reveal reveal-delay-{{ forloop.counter }}">
-          <div class="ps-num">{{ step.number }}</div>
-          <div class="ps-icon">{{ step.icon }}</div>
-          <h4>{{ step.title }}</h4>
-          <p>{{ step.description }}</p>
+          <div class="ps-num" data-edit="processstep.{{ step.id }}.number">{{ step.number }}</div>
+          <div class="ps-icon" data-edit="processstep.{{ step.id }}.icon">{{ step.icon }}</div>
+          <h4 data-edit="processstep.{{ step.id }}.title">{{ step.title }}</h4>
+          <p data-edit="processstep.{{ step.id }}.description">{{ step.description }}</p>
         </div>
         {% if not forloop.last %}
           <div class="process-arrow">→</div>
@@ -105,22 +105,22 @@
       <div class="contact-card reveal reveal-delay-1">
         <div class="cc-icon">📍</div>
         <h4>Хаяг</h4>
-        <p>{{ contact_address }}</p>
+        <p data-sc="contact_address">{{ contact_address }}</p>
       </div>
       <div class="contact-card reveal reveal-delay-2">
         <div class="cc-icon">📱</div>
         <h4>Утас</h4>
-        <p>{{ contact_phone }}</p>
+        <p data-sc="contact_phone">{{ contact_phone }}</p>
       </div>
       <div class="contact-card reveal reveal-delay-3">
         <div class="cc-icon">📧</div>
         <h4>И-мэйл</h4>
-        <p>{{ contact_email }}</p>
+        <p data-sc="contact_email">{{ contact_email }}</p>
       </div>
       <div class="contact-card reveal reveal-delay-4">
         <div class="cc-icon">📘</div>
         <h4>Сошиал медиа</h4>
-        <p>{{ contact_social }}</p>
+        <p data-sc="contact_social">{{ contact_social }}</p>
       </div>
     </div>
     <div class="contact-cta reveal">

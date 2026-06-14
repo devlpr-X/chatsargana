@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Бүтээгдэхүүн — Чацаргана{% endblock %}
 
@@ -63,11 +64,11 @@
           <div class="pi-header">
             <div>
               <p class="pi-cat">{{ product.category.name|default:"" }}</p>
-              <h3 class="pi-title">{{ product.name }}</h3>
+              <h3 class="pi-title" data-edit="product.{{ product.id }}.name">{{ product.name }}</h3>
             </div>
-            <div class="pi-badge">{{ product.badge_icon }}</div>
+            <div class="pi-badge" data-edit="product.{{ product.id }}.badge_icon">{{ product.badge_icon }}</div>
           </div>
-          <p class="pi-desc">{{ product.description }}</p>
+          <p class="pi-desc" data-edit="product.{{ product.id }}.description">{{ product.description }}</p>
           {% if product.get_nutrients_list %}
             <div class="pi-nutrients">
               {% for nutrient in product.get_nutrients_list %}
@@ -77,8 +78,8 @@
           {% endif %}
           <div class="pi-price-row">
             <div class="pi-price">
-              <span class="price-amount">₮{{ product.price|floatformat:0 }}</span>
-              <span class="price-unit">/ {{ product.unit }}</span>
+              <span class="price-amount">₮<span data-edit="product.{{ product.id }}.price">{{ product.price|floatformat:0|intcomma }}</span></span>
+              <span class="price-unit">/ <span data-edit="product.{{ product.id }}.unit">{{ product.unit }}</span></span>
             </div>
             <div class="pi-actions">
               <button class="btn btn-primary pi-btn add-to-cart"

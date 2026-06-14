@@ -106,8 +106,16 @@ class NutrientCardAdmin(admin.ModelAdmin):
 # ─── Usage Cards ─────────────────────────────────────────────
 @admin.register(UsageCard)
 class UsageCardAdmin(admin.ModelAdmin):
-    list_display = ('icon', 'title', 'order')
+    list_display = ('image_preview', 'icon', 'title', 'order')
     list_editable = ('order',)
+    fields = ('image', 'icon', 'title', 'description', 'order')
+
+    def image_preview(self, obj):
+        from django.utils.html import format_html
+        if obj.image:
+            return format_html('<img src="{}" style="height:40px;width:40px;object-fit:cover;border-radius:6px"/>', obj.image.url)
+        return '—'
+    image_preview.short_description = 'Зураг'
 
 
 # ─── Key Numbers ─────────────────────────────────────────────

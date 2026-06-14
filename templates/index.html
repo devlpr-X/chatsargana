@@ -21,13 +21,13 @@
   <div class="hero-content">
     <div class="hero-badge">
       <span class="badge-dot"></span>
-      <span>{{ hero_badge }}</span>
+      <span data-sc="hero_badge">{{ hero_badge }}</span>
     </div>
     <h1 class="hero-title">
-      <span class="hero-line">{{ hero_title_1 }}</span>
-      <span class="hero-line italic">{{ hero_title_2 }}</span>
+      <span class="hero-line" data-sc="hero_title_1">{{ hero_title_1 }}</span>
+      <span class="hero-line italic" data-sc="hero_title_2">{{ hero_title_2 }}</span>
     </h1>
-    <p class="hero-subtitle">{{ hero_subtitle }}</p>
+    <p class="hero-subtitle" data-sc="hero_subtitle">{{ hero_subtitle }}</p>
     <div class="hero-actions">
       <a href="{% url 'core:products' %}" class="btn btn-primary">
         Бүтээгдэхүүн үзэх <span class="arrow-icon"></span>
@@ -37,8 +37,8 @@
     <div class="hero-stats">
       {% for stat in hero_stats %}
         <div class="stat">
-          <span class="stat-num">{{ stat.num }}</span>
-          <span class="stat-label">{{ stat.label|linebreaksbr }}</span>
+          <span class="stat-num" data-edit="herostat.{{ stat.id }}.num">{{ stat.num }}</span>
+          <span class="stat-label" data-edit="herostat.{{ stat.id }}.label">{{ stat.label|linebreaksbr }}</span>
         </div>
         {% if not forloop.last %}<div class="stat-divider"></div>{% endif %}
       {% endfor %}
@@ -74,10 +74,10 @@
   <div class="strip-inner">
     {% for feature in features %}
       <div class="strip-item">
-        <div class="strip-icon">{{ feature.icon }}</div>
+        <div class="strip-icon" data-edit="feature.{{ feature.id }}.icon">{{ feature.icon }}</div>
         <div>
-          <strong>{{ feature.title }}</strong>
-          <p>{{ feature.description }}</p>
+          <strong data-edit="feature.{{ feature.id }}.title">{{ feature.title }}</strong>
+          <p data-edit="feature.{{ feature.id }}.description">{{ feature.description }}</p>
         </div>
       </div>
       {% if not forloop.last %}<div class="strip-sep">·</div>{% endif %}
@@ -89,9 +89,9 @@
 <section class="about-teaser">
   <div class="teaser-inner">
     <div class="teaser-text reveal">
-      <p class="section-label">{{ about_label }}</p>
-      <h2 class="section-title">{{ about_title|safe }}</h2>
-      <p class="teaser-body">{{ about_body }}</p>
+      <p class="section-label" data-sc="about_teaser_label">{{ about_label }}</p>
+      <h2 class="section-title" data-sc="about_teaser_title">{{ about_title|safe }}</h2>
+      <p class="teaser-body" data-sc="about_teaser_body">{{ about_body }}</p>
       <a href="{% url 'core:info' %}" class="btn btn-outline" style="margin-top:24px">
         Дэлгэрэнгүй унших <span class="arrow-icon"></span>
       </a>
@@ -101,11 +101,11 @@
         {% for card in about_cards %}
           <div class="teaser-card tc-{{ forloop.counter }}">
             {% if card.card_type == 'num' %}
-              <div class="tc-num">{{ card.value }}</div>
+              <div class="tc-num" data-edit="aboutcard.{{ card.id }}.value">{{ card.value }}</div>
             {% else %}
-              <div class="tc-icon">{{ card.value }}</div>
+              <div class="tc-icon" data-edit="aboutcard.{{ card.id }}.value">{{ card.value }}</div>
             {% endif %}
-            <div class="tc-label">{{ card.label|linebreaksbr }}</div>
+            <div class="tc-label" data-edit="aboutcard.{{ card.id }}.label">{{ card.label|linebreaksbr }}</div>
           </div>
         {% endfor %}
       </div>
@@ -117,8 +117,8 @@
 <section class="products-preview">
   <div class="products-inner">
     <div class="products-header reveal">
-      <p class="section-label">{{ products_label }}</p>
-      <h2 class="section-title">{{ products_title|safe }}</h2>
+      <p class="section-label" data-sc="products_label">{{ products_label }}</p>
+      <h2 class="section-title" data-sc="products_title">{{ products_title|safe }}</h2>
     </div>
     <div class="products-grid">
       {% for product in preview_products %}
@@ -132,8 +132,8 @@
             {% endif %}
           </div>
           <div class="prod-info">
-            <h3>{{ product.name }}</h3>
-            <p>{{ product.description|truncatechars:70 }}</p>
+            <h3 data-edit="product.{{ product.id }}.name">{{ product.name }}</h3>
+            <p data-edit="product.{{ product.id }}.description">{{ product.description|truncatechars:70 }}</p>
             <a href="{% url 'core:products' %}" class="prod-link">Дэлгэрэнгүй →</a>
           </div>
         </div>
@@ -151,15 +151,15 @@
 <section class="benefits-teaser">
   <div class="benefits-inner">
     <div class="benefits-header reveal">
-      <p class="section-label">{{ benefits_label }}</p>
-      <h2 class="section-title">{{ benefits_title|safe }}</h2>
+      <p class="section-label" data-sc="benefits_label">{{ benefits_label }}</p>
+      <h2 class="section-title" data-sc="benefits_title">{{ benefits_title|safe }}</h2>
     </div>
     <div class="benefits-grid">
       {% for benefit in benefit_teasers %}
         <div class="benefit-item reveal reveal-delay-{{ forloop.counter }}">
-          <div class="benefit-icon">{{ benefit.icon }}</div>
-          <h4>{{ benefit.title }}</h4>
-          <p>{{ benefit.description }}</p>
+          <div class="benefit-icon" data-edit="benefitteaser.{{ benefit.id }}.icon">{{ benefit.icon }}</div>
+          <h4 data-edit="benefitteaser.{{ benefit.id }}.title">{{ benefit.title }}</h4>
+          <p data-edit="benefitteaser.{{ benefit.id }}.description">{{ benefit.description }}</p>
         </div>
       {% endfor %}
     </div>

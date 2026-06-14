@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Захиалга өгөх — Чацаргана{% endblock %}
 {% block extra_css %}
@@ -84,13 +85,13 @@
               <li class="summary-item">
                 <span class="name">{{ item.name }}</span>
                 <span class="qty">×{{ item.qty }}</span>
-                <span>₮{{ item.subtotal|floatformat:0 }}</span>
+                <span>₮{{ item.subtotal|floatformat:0|intcomma }}</span>
               </li>
               {% endfor %}
             </ul>
             <div class="summary-total">
               <span class="label">Нийт</span>
-              <span class="amount">₮{{ total|floatformat:0 }}</span>
+              <span class="amount">₮{{ total|floatformat:0|intcomma }}</span>
             </div>
             <button type="submit" class="btn-order">Захиалга баталгаажуулах ✓</button>
             <a href="{% url 'core:cart' %}" class="btn-outline" style="display:flex;justify-content:center;margin-top:10px;">← Сагс руу буцах</a>

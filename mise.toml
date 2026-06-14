@@ -1,0 +1,7 @@
+[tools]
+python = "3.11.4"
+
+[settings]
+# python-build-standalone 3.11.4 (2023) has no GitHub artifact attestations,
+# which makes `mise install` fail on Railway. Skip that verification.
+python.github_attestations = false

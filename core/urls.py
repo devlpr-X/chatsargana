@@ -36,6 +36,11 @@ urlpatterns = [
     path('panel/orders/',                          views.panel_orders,       name='panel_orders'),
     path('panel/orders/<int:order_id>/',           views.panel_order_detail, name='panel_order_detail'),
 
+    # ── Reports ───────────────────────────────────────────────
+    path('panel/reports/',                         views.panel_reports,       name='panel_reports'),
+    path('panel/reports/export/<str:fmt>/',        views.panel_report_export, name='panel_report_export'),
+    path('panel/reports/email/',                   views.panel_report_email,  name='panel_report_email'),
+
     # ── Inline edit API ───────────────────────────────────────
     path('panel/api/inline/',                      views.inline_edit,        name='inline_edit'),
 ]

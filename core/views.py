@@ -1,16 +1,22 @@
 import uuid
+import csv
+import io
+import calendar
+from datetime import date, datetime
 from decimal import Decimal
 from functools import wraps
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.conf import settings
-from django.db.models import Sum
+from django.db.models import Sum, Count, F, DecimalField
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import (
@@ -230,6 +236,11 @@ def cart_update(request, product_id):
 #  Checkout & Orders
 # ─────────────────────────────────────────────────────────────
 def checkout(request):
+    # Админ хэрэглэгч захиалга өгдөггүй — зөвхөн хяналт хийнэ
+    if request.user.is_authenticated and request.user.is_staff:
+        messages.info(request, 'Админ хэрэглэгч захиалга өгөх боломжгүй — зөвхөн захиалга хянана.')
+        return redirect('core:panel_dashboard')
+
     cart = _get_cart(request)
     if not cart:
         return redirect('core:cart')
@@ -280,6 +291,7 @@ def checkout(request):
                     price        = Decimal(item['price']),
                 )
 
+            _notify_admin_new_order(request, order)
             _save_cart(request, {})
             return redirect('core:order_confirm', order_id=order.pk)
 
@@ -511,6 +523,327 @@ def panel_orders(request):
         'status_colors':  Order.STATUS_COLORS,
     }
     return render(request, 'panel_orders.html', context)
+
+
+# ─────────────────────────────────────────────────────────────
+#  Admin email notification (new order)
+# ─────────────────────────────────────────────────────────────
+def _notify_admin_new_order(request, order):
+    """Шинэ захиалга үүсэхэд админы и-мэйл рүү мэдэгдэл илгээнэ."""
+    admin_email = getattr(settings, 'ADMIN_NOTIFY_EMAIL', '') or settings.DEFAULT_FROM_EMAIL
+    if not admin_email:
+        return
+    try:
+        panel_url = request.build_absolute_uri(
+            reverse('core:panel_order_detail', args=[order.pk])
+        )
+    except Exception:
+        panel_url = ''
+
+    lines = [
+        f'Шинэ захиалга #{order.pk} ирлээ.',
+        '',
+        f'Нэр:   {order.customer_name}',
+        f'Утас:  {order.customer_phone}',
+        f'И-мэйл: {order.customer_email or "—"}',
+        f'Хаяг:  {order.address}',
+    ]
+    if order.note:
+        lines.append(f'Тэмдэглэл: {order.note}')
+    lines.append('')
+    lines.append('Захиалсан бараа:')
+    for it in order.items.all():
+        lines.append(f'  • {it.product_name} × {it.quantity} = ₮{it.subtotal:,.0f}')
+    lines.append('')
+    lines.append(f'Нийт дүн: ₮{order.total_price:,.0f}')
+    if panel_url:
+        lines.append('')
+        lines.append(f'Дэлгэрэнгүй: {panel_url}')
+
+    try:
+        send_mail(
+            subject=f'🛒 Шинэ захиалга #{order.pk} — {order.customer_name}',
+            message='\n'.join(lines),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[admin_email],
+            fail_silently=True,
+        )
+    except Exception:
+        pass
+
+
+# ─────────────────────────────────────────────────────────────
+#  Reports — date presets + aggregation
+# ─────────────────────────────────────────────────────────────
+PRESET_LABELS = [
+    ('this_month',    'Энэ сар'),
+    ('last_month',    'Өмнөх сар'),
+    ('last_3_months', 'Сүүлийн 3 сар'),
+    ('last_6_months', 'Сүүлийн 6 сар'),
+    ('this_year',     'Энэ жил'),
+    ('last_year',     'Өмнөх жил'),
+    ('all',           'Бүх хугацаа'),
+]
+
+
+def _month_bounds(year, month):
+    first = date(year, month, 1)
+    last = date(year, month, calendar.monthrange(year, month)[1])
+    return first, last
+
+
+def _shift_month(year, month, delta):
+    idx = year * 12 + (month - 1) + delta
+    return idx // 12, idx % 12 + 1
+
+
+def _preset_ranges(today):
+    """Сонголт бүрийн (эхлэх, дуусах) огноог буцаана."""
+    y, m = today.year, today.month
+    ranges = {}
+    ranges['this_month'] = _month_bounds(y, m)
+    ly, lm = _shift_month(y, m, -1)
+    ranges['last_month'] = _month_bounds(ly, lm)
+    s3y, s3m = _shift_month(y, m, -2)
+    ranges['last_3_months'] = (_month_bounds(s3y, s3m)[0], _month_bounds(y, m)[1])
+    s6y, s6m = _shift_month(y, m, -5)
+    ranges['last_6_months'] = (_month_bounds(s6y, s6m)[0], _month_bounds(y, m)[1])
+    ranges['this_year'] = (date(y, 1, 1), date(y, 12, 31))
+    ranges['last_year'] = (date(y - 1, 1, 1), date(y - 1, 12, 31))
+    first_dt = Order.objects.order_by('created_at').values_list('created_at', flat=True).first()
+    start_all = timezone.localtime(first_dt).date() if first_dt else date(y, 1, 1)
+    ranges['all'] = (start_all, today)
+    return ranges
+
+
+def _resolve_range(request):
+    """GET-ээс preset эсвэл custom огноог задлаж (preset, start, end) буцаана."""
+    today = timezone.localdate()
+    ranges = _preset_ranges(today)
+    preset = request.GET.get('preset', 'this_month')
+    if preset not in ranges:
+        preset = 'this_month'
+
+    start_str = request.GET.get('start', '').strip()
+    end_str = request.GET.get('end', '').strip()
+    if start_str and end_str:
+        try:
+            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_str, '%Y-%m-%d').date()
+            if start_date > end_date:
+                start_date, end_date = end_date, start_date
+            return 'custom', start_date, end_date, ranges
+        except ValueError:
+            pass
+    start_date, end_date = ranges[preset]
+    return preset, start_date, end_date, ranges
+
+
+def _report_data(start_date, end_date):
+    """Тухайн хугацааны нэгтгэсэн тайлангийн өгөгдөл."""
+    orders = Order.objects.filter(
+        created_at__date__gte=start_date, created_at__date__lte=end_date
+    )
+    non_cancelled = orders.exclude(status='cancelled')
+
+    total_revenue = non_cancelled.aggregate(t=Sum('total_price'))['t'] or 0
+    total_orders = orders.count()
+    valid_orders = non_cancelled.count()
+
+    items = OrderItem.objects.filter(order__in=non_cancelled)
+    products = list(items.values('product_name').annotate(
+        qty=Sum('quantity'),
+        revenue=Sum(F('quantity') * F('price'),
+                    output_field=DecimalField(max_digits=14, decimal_places=0)),
+        order_count=Count('order', distinct=True),
+    ).order_by('-qty'))
+
+    total_items = sum(p['qty'] for p in products)
+    avg_order = (total_revenue / valid_orders) if valid_orders else 0
+
+    top5 = products[:5]
+    bottom5 = sorted(products, key=lambda p: p['qty'])[:5]
+
+    status_breakdown = []
+    for val, label in Order.STATUS_CHOICES:
+        status_breakdown.append({
+            'value': val,
+            'label': label,
+            'count': orders.filter(status=val).count(),
+            'color': Order.STATUS_COLORS.get(val, '#6b7280'),
+        })
+
+    return {
+        'orders':           orders.select_related('user').prefetch_related('items'),
+        'total_orders':     total_orders,
+        'valid_orders':     valid_orders,
+        'total_revenue':    total_revenue,
+        'total_items':      total_items,
+        'avg_order':        avg_order,
+        'products':         products,
+        'top5':             top5,
+        'bottom5':          bottom5,
+        'status_breakdown': status_breakdown,
+    }
+
+
+def _build_xlsx(data, start_date, end_date):
+    """Тайланг .xlsx болгон bytes хэлбэрээр буцаана."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Тайлан'
+    bold = Font(bold=True)
+
+    ws.append(['Чацаргана — Борлуулалтын тайлан'])
+    ws['A1'].font = bold
+    ws.append([f'Хугацаа: {start_date} — {end_date}'])
+    ws.append([])
+    ws.append(['Нийт захиалга', data['total_orders']])
+    ws.append(['Хүчинтэй захиалга', data['valid_orders']])
+    ws.append(['Нийт орлого (₮)', float(data['total_revenue'])])
+    ws.append(['Нийт бараа (ширхэг)', int(data['total_items'])])
+    ws.append(['Дундаж захиалга (₮)', float(data['avg_order'])])
+    ws.append([])
+
+    hdr = ['Бүтээгдэхүүн', 'Тоо ширхэг', 'Орлого (₮)', 'Захиалга']
+    ws.append(hdr)
+    for c in ws[ws.max_row]:
+        c.font = bold
+    for p in data['products']:
+        ws.append([p['product_name'], int(p['qty']), float(p['revenue']), p['order_count']])
+
+    for col in ('A', 'B', 'C', 'D'):
+        ws.column_dimensions[col].width = 22
+
+    # Захиалгуудын дэлгэрэнгүй sheet
+    ws2 = wb.create_sheet('Захиалгууд')
+    ws2.append(['#', 'Нэр', 'Утас', 'Төлөв', 'Нийт (₮)', 'Огноо'])
+    for c in ws2[1]:
+        c.font = bold
+    for o in data['orders']:
+        ws2.append([
+            o.pk, o.customer_name, o.customer_phone,
+            o.get_status_display(), float(o.total_price),
+            timezone.localtime(o.created_at).strftime('%Y-%m-%d %H:%M'),
+        ])
+    for col, w in zip('ABCDEF', (8, 24, 16, 16, 14, 18)):
+        ws2.column_dimensions[col].width = w
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return buf.getvalue()
+
+
+@panel_required
+def panel_reports(request):
+    preset, start_date, end_date, ranges = _resolve_range(request)
+    data = _report_data(start_date, end_date)
+
+    preset_json = {k: [v[0].isoformat(), v[1].isoformat()] for k, v in ranges.items()}
+    chart_rows = data['products'][:10]
+    chart = {
+        'labels':  [p['product_name'] for p in chart_rows],
+        'qty':     [int(p['qty']) for p in chart_rows],
+        'revenue': [float(p['revenue']) for p in chart_rows],
+    }
+
+    context = {
+        'preset':         preset,
+        'preset_labels':  PRESET_LABELS,
+        'preset_json':    preset_json,
+        'start_date':     start_date.isoformat(),
+        'end_date':       end_date.isoformat(),
+        'chart':          chart,
+        **data,
+    }
+    return render(request, 'panel_reports.html', context)
+
+
+@panel_required
+def panel_report_export(request, fmt):
+    preset, start_date, end_date, ranges = _resolve_range(request)
+    data = _report_data(start_date, end_date)
+    fname = f'tailan_{start_date}_{end_date}'
+
+    if fmt == 'csv':
+        resp = HttpResponse(content_type='text/csv; charset=utf-8')
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.csv"'
+        resp.write('﻿')  # Excel-д Cyrillic зөв харагдах BOM
+        w = csv.writer(resp)
+        w.writerow(['Чацаргана — Борлуулалтын тайлан'])
+        w.writerow([f'Хугацаа: {start_date} — {end_date}'])
+        w.writerow([])
+        w.writerow(['Нийт захиалга', data['total_orders']])
+        w.writerow(['Нийт орлого (₮)', int(data['total_revenue'])])
+        w.writerow(['Нийт бараа (ширхэг)', int(data['total_items'])])
+        w.writerow([])
+        w.writerow(['Бүтээгдэхүүн', 'Тоо ширхэг', 'Орлого (₮)', 'Захиалга'])
+        for p in data['products']:
+            w.writerow([p['product_name'], int(p['qty']), int(p['revenue']), p['order_count']])
+        return resp
+
+    if fmt in ('xlsx', 'excel'):
+        content = _build_xlsx(data, start_date, end_date)
+        resp = HttpResponse(
+            content,
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        resp['Content-Disposition'] = f'attachment; filename="{fname}.xlsx"'
+        return resp
+
+    return JsonResponse({'ok': False, 'error': 'Unknown format'}, status=400)
+
+
+@panel_required
+@require_POST
+def panel_report_email(request):
+    preset, start_date, end_date, ranges = _resolve_range(request)
+    data = _report_data(start_date, end_date)
+    admin_email = getattr(settings, 'ADMIN_NOTIFY_EMAIL', '') or settings.DEFAULT_FROM_EMAIL
+
+    if not admin_email:
+        messages.error(request, 'Админы и-мэйл тохируулагдаагүй байна.')
+        return redirect(f"{reverse('core:panel_reports')}?preset={preset}&start={start_date}&end={end_date}")
+
+    lines = [
+        'Чацаргана — Борлуулалтын тайлан',
+        f'Хугацаа: {start_date} — {end_date}',
+        '',
+        f'Нийт захиалга:      {data["total_orders"]}',
+        f'Хүчинтэй захиалга:  {data["valid_orders"]}',
+        f'Нийт орлого:        ₮{data["total_revenue"]:,.0f}',
+        f'Нийт бараа:         {data["total_items"]} ширхэг',
+        f'Дундаж захиалга:    ₮{data["avg_order"]:,.0f}',
+        '',
+        'Их борлуулалттай 5 бараа:',
+    ]
+    for p in data['top5']:
+        lines.append(f'  • {p["product_name"]}: {p["qty"]} ширхэг (₮{p["revenue"]:,.0f})')
+    lines.append('')
+    lines.append('Дэлгэрэнгүйг хавсаргасан Excel файлаас үзнэ үү.')
+
+    try:
+        email = EmailMessage(
+            subject=f'📊 Борлуулалтын тайлан {start_date} — {end_date}',
+            body='\n'.join(lines),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[admin_email],
+        )
+        email.attach(
+            f'tailan_{start_date}_{end_date}.xlsx',
+            _build_xlsx(data, start_date, end_date),
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        email.send(fail_silently=False)
+        messages.success(request, f'Тайлан {admin_email} хаяг руу илгээгдлээ.')
+    except Exception as e:
+        messages.error(request, f'И-мэйл илгээхэд алдаа гарлаа: {e}')
+
+    return redirect(f"{reverse('core:panel_reports')}?preset={preset}&start={start_date}&end={end_date}")
 
 
 # ─────────────────────────────────────────────────────────────

@@ -154,6 +154,9 @@ EMAIL_HOST_USER    = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER', 'noreply@chatsargana.mn')
 
+# Шинэ захиалга / тайлан очих админы и-мэйл (default: gmail хаяг өөрөө)
+ADMIN_NOTIFY_EMAIL = os.getenv('ADMIN_NOTIFY_EMAIL', '') or EMAIL_HOST_USER
+
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',

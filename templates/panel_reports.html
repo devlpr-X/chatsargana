@@ -1,0 +1,294 @@
+{% extends 'panel_base.html' %}
+{% load humanize %}
+
+{% block title %}Тайлан{% endblock %}
+{% block topbar_title %}Борлуулалтын тайлан{% endblock %}
+{% block nav_reports %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .report-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:20px}
+  .report-filter .ff{display:flex;flex-direction:column;gap:4px}
+  .report-filter label{font-size:.72rem;color:rgba(232,240,233,.55);text-transform:uppercase;letter-spacing:.04em}
+  .report-filter select,.report-filter input[type=date]{
+    background:#16201a;border:1px solid rgba(126,200,80,.25);color:#e8f0e9;
+    padding:8px 12px;border-radius:8px;font-size:.85rem;font-family:inherit}
+  .report-actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+  .exp-btn{display:inline-flex;align-items:center;gap:6px;background:#16201a;
+    border:1px solid rgba(126,200,80,.25);color:#cfe6c5;padding:8px 14px;border-radius:8px;
+    font-size:.8rem;cursor:pointer;text-decoration:none;font-family:inherit}
+  .exp-btn:hover{border-color:rgba(126,200,80,.6);color:#fff}
+  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:900px){.charts-grid{grid-template-columns:1fr}}
+  .chart-box{position:relative;height:320px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:900px){.two-col{grid-template-columns:1fr}}
+  .status-pills{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+  .status-pill{display:flex;align-items:center;gap:7px;background:#16201a;
+    border:1px solid rgba(255,255,255,.06);padding:7px 13px;border-radius:20px;font-size:.8rem}
+  .status-pill .dot{width:9px;height:9px;border-radius:50%}
+  .ord-row{cursor:pointer}
+  .ord-row:hover{background:rgba(126,200,80,.05)}
+  .ord-detail td{background:#0f1712;padding:0}
+  .ord-detail .odi{padding:16px 20px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:700px){.ord-detail .odi{grid-template-columns:1fr}}
+  .odi .lbl{font-size:.7rem;color:rgba(232,240,233,.45);text-transform:uppercase;margin-bottom:3px}
+  .odi ul{margin:6px 0 0;padding-left:18px}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1>Борлуулалтын тайлан</h1>
+  <p>{{ start_date }} — {{ end_date }}</p>
+</div>
+
+<!-- Filter -->
+<form method="get" class="report-filter">
+  <div class="ff">
+    <label>Хугацаа</label>
+    <select name="preset" id="presetSel">
+      {% for val, label in preset_labels %}
+      <option value="{{ val }}" {% if preset == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+      <option value="custom" {% if preset == 'custom' %}selected{% endif %}>Захиалгат</option>
+    </select>
+  </div>
+  <div class="ff">
+    <label>Эхлэх</label>
+    <input type="date" name="start" id="startInp" value="{{ start_date }}">
+  </div>
+  <div class="ff">
+    <label>Дуусах</label>
+    <input type="date" name="end" id="endInp" value="{{ end_date }}">
+  </div>
+  <button type="submit" class="btn-p">Шүүх</button>
+</form>
+
+<!-- Export actions -->
+<div class="report-actions">
+  <a class="exp-btn" href="{% url 'core:panel_report_export' 'csv' %}?preset={{ preset }}&start={{ start_date }}&end={{ end_date }}">⬇ CSV</a>
+  <a class="exp-btn" href="{% url 'core:panel_report_export' 'xlsx' %}?preset={{ preset }}&start={{ start_date }}&end={{ end_date }}">⬇ Excel</a>
+  <button type="button" class="exp-btn" onclick="downloadPDF()">⬇ PDF</button>
+  <button type="button" class="exp-btn" onclick="downloadImage()">⬇ Зураг</button>
+  <form method="post" action="{% url 'core:panel_report_email' %}" style="display:inline">
+    {% csrf_token %}
+    <input type="hidden" name="preset" value="{{ preset }}">
+    <input type="hidden" name="start" value="{{ start_date }}">
+    <input type="hidden" name="end" value="{{ end_date }}">
+    <button type="submit" class="exp-btn">✉ Имэйлээр илгээх</button>
+  </form>
+</div>
+
+<div id="report-capture">
+
+  <!-- Summary stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="sc-label">Нийт захиалга</div>
+      <div class="sc-value">{{ total_orders }}</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="sc-label">Нийт орлого</div>
+      <div class="sc-value" style="font-size:1.4rem">₮{{ total_revenue|floatformat:0|intcomma }}</div>
+      <div class="sc-sub">цуцлагдсанг хассан</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">Зарагдсан бараа</div>
+      <div class="sc-value">{{ total_items|intcomma }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="sc-label">Дундаж захиалга</div>
+      <div class="sc-value" style="font-size:1.4rem">₮{{ avg_order|floatformat:0|intcomma }}</div>
+    </div>
+  </div>
+
+  <!-- Status breakdown -->
+  <div class="status-pills">
+    {% for s in status_breakdown %}
+    <div class="status-pill">
+      <span class="dot" style="background:{{ s.color }}"></span>
+      {{ s.label }}: <strong>{{ s.count }}</strong>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="panel-card">
+      <div class="panel-card-header"><h2>Орлогын хувь (бараагаар)</h2></div>
+      <div class="chart-box"><canvas id="pieChart"></canvas></div>
+    </div>
+    <div class="panel-card">
+      <div class="panel-card-header"><h2>Зарагдсан тоо ширхэг</h2></div>
+      <div class="chart-box"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Top / Bottom 5 -->
+  <div class="two-col" style="margin-top:18px">
+    <div class="panel-card">
+      <div class="panel-card-header"><h2>🔝 Их борлуулалттай 5</h2></div>
+      <table class="panel-table">
+        <thead><tr><th>Бүтээгдэхүүн</th><th>Тоо</th><th>Орлого</th></tr></thead>
+        <tbody>
+          {% for p in top5 %}
+          <tr>
+            <td>{{ p.product_name }}</td>
+            <td style="font-weight:700;color:#7ec850">{{ p.qty|intcomma }}</td>
+            <td>₮{{ p.revenue|floatformat:0|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="text-align:center;padding:24px;color:rgba(232,240,233,.35)">Өгөгдөл алга</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="panel-card">
+      <div class="panel-card-header"><h2>🔻 Бага борлуулалттай 5</h2></div>
+      <table class="panel-table">
+        <thead><tr><th>Бүтээгдэхүүн</th><th>Тоо</th><th>Орлого</th></tr></thead>
+        <tbody>
+          {% for p in bottom5 %}
+          <tr>
+            <td>{{ p.product_name }}</td>
+            <td style="font-weight:700;color:#f59e0b">{{ p.qty|intcomma }}</td>
+            <td>₮{{ p.revenue|floatformat:0|intcomma }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="text-align:center;padding:24px;color:rgba(232,240,233,.35)">Өгөгдөл алга</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Order list (click → detail) -->
+  <div class="panel-card" style="margin-top:18px">
+    <div class="panel-card-header"><h2>Захиалгууд ({{ total_orders }})</h2></div>
+    <table class="panel-table">
+      <thead>
+        <tr><th>#</th><th>Нэр</th><th>Утас</th><th>Нийт</th><th>Төлөв</th><th>Огноо</th></tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr class="ord-row" data-target="od-{{ order.pk }}">
+          <td>#{{ order.pk }}</td>
+          <td>{{ order.customer_name }}</td>
+          <td>{{ order.customer_phone }}</td>
+          <td style="font-weight:700;color:#7ec850">₮{{ order.total_price|floatformat:0|intcomma }}</td>
+          <td><span class="s-badge s-{{ order.status }}">{{ order.get_status_display }}</span></td>
+          <td style="color:rgba(232,240,233,.5);font-size:.82rem">{{ order.created_at|date:"Y.m.d H:i" }}</td>
+        </tr>
+        <tr class="ord-detail" id="od-{{ order.pk }}" style="display:none">
+          <td colspan="6">
+            <div class="odi">
+              <div>
+                <div class="lbl">Захиалсан бараа</div>
+                <ul>
+                  {% for item in order.items.all %}
+                  <li>{{ item.product_name }} × {{ item.quantity }} — ₮{{ item.subtotal|floatformat:0|intcomma }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div>
+                <div class="lbl">Хүргэлтийн мэдээлэл</div>
+                <div>📍 {{ order.address }}</div>
+                {% if order.customer_email %}<div>✉ {{ order.customer_email }}</div>{% endif %}
+                {% if order.note %}<div style="margin-top:6px;color:rgba(232,240,233,.6)">📝 {{ order.note }}</div>{% endif %}
+                <a href="{% url 'core:panel_order_detail' order_id=order.pk %}" class="btn-p btn-p-ghost" style="margin-top:10px;display:inline-block;font-size:.78rem;padding:5px 12px">Бүрэн харах →</a>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;padding:40px;color:rgba(232,240,233,.35)">Энэ хугацаанд захиалга алга</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /report-capture -->
+
+{{ preset_json|json_script:"preset-ranges" }}
+{{ chart|json_script:"chart-data" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function(){
+  // ── Preset → date autofill ──
+  const presetRanges = JSON.parse(document.getElementById('preset-ranges').textContent);
+  const sel = document.getElementById('presetSel');
+  const si = document.getElementById('startInp');
+  const ei = document.getElementById('endInp');
+  sel.addEventListener('change', function(){
+    const r = presetRanges[sel.value];
+    if (r){ si.value = r[0]; ei.value = r[1]; }
+  });
+  [si, ei].forEach(function(i){ i.addEventListener('change', function(){ sel.value = 'custom'; }); });
+
+  // ── Charts ──
+  const data = JSON.parse(document.getElementById('chart-data').textContent);
+  const palette = ['#7ec850','#3b82f6','#f59e0b','#8b5cf6','#ef4444','#22c55e','#06b6d4','#ec4899','#eab308','#14b8a6'];
+  const gridC = 'rgba(255,255,255,.07)';
+  const tickC = 'rgba(232,240,233,.6)';
+
+  if (data.labels.length){
+    new Chart(document.getElementById('pieChart'), {
+      type:'pie',
+      data:{ labels:data.labels, datasets:[{ data:data.revenue, backgroundColor:palette, borderColor:'#0f1511', borderWidth:2 }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'bottom', labels:{ color:tickC, font:{size:11}, boxWidth:12 } } } }
+    });
+    new Chart(document.getElementById('barChart'), {
+      type:'bar',
+      data:{ labels:data.labels, datasets:[{ label:'Тоо ширхэг', data:data.qty, backgroundColor:'#7ec850', borderRadius:5 }] },
+      options:{ responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false } },
+        scales:{ x:{ ticks:{ color:tickC, font:{size:10} }, grid:{ color:gridC } },
+                 y:{ ticks:{ color:tickC }, grid:{ color:gridC }, beginAtZero:true } } }
+    });
+  }
+
+  // ── Order row expand ──
+  document.querySelectorAll('.ord-row').forEach(function(row){
+    row.addEventListener('click', function(){
+      const d = document.getElementById(row.dataset.target);
+      if (d) d.style.display = (d.style.display === 'none' || !d.style.display) ? 'table-row' : 'none';
+    });
+  });
+
+  // ── Image / PDF download ──
+  async function capture(){
+    const el = document.getElementById('report-capture');
+    return await html2canvas(el, { backgroundColor:'#0d120f', scale:2, useCORS:true });
+  }
+  window.downloadImage = async function(){
+    const canvas = await capture();
+    const a = document.createElement('a');
+    a.download = 'tailan_{{ start_date }}_{{ end_date }}.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+  };
+  window.downloadPDF = async function(){
+    const canvas = await capture();
+    const img = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','pt','a4');
+    const pw = pdf.internal.pageSize.getWidth();
+    const ph = pdf.internal.pageSize.getHeight();
+    const imgH = canvas.height * pw / canvas.width;
+    let left = imgH, pos = 0;
+    pdf.addImage(img,'PNG',0,pos,pw,imgH); left -= ph;
+    while (left > 0){ pos -= ph; pdf.addPage(); pdf.addImage(img,'PNG',0,pos,pw,imgH); left -= ph; }
+    pdf.save('tailan_{{ start_date }}_{{ end_date }}.pdf');
+  };
+})();
+</script>
+{% endblock %}

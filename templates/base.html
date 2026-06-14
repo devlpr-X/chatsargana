@@ -23,13 +23,18 @@
       <li><a href="{% url 'core:benefits' %}" {% if request.resolver_match.url_name == 'benefits' %}class="active"{% endif %}>Ашиг тус</a></li>
       <li><a href="{% url 'core:about' %}"    class="nav-cta {% if request.resolver_match.url_name == 'about' %}active{% endif %}">Бидний тухай</a></li>
       {% if request.user.is_authenticated %}
+        {% if request.user.is_staff %}
+        <li><a href="{% url 'core:panel_dashboard' %}">Самбар</a></li>
+        {% else %}
         <li><a href="{% url 'core:my_orders' %}" {% if request.resolver_match.url_name == 'my_orders' %}class="active"{% endif %}>Захиалгууд</a></li>
+        {% endif %}
         <li class="nav-user-menu">
           <a href="#" class="nav-user-trigger">{{ request.user.username }} ▾</a>
           <ul class="nav-dropdown">
-            <li><a href="{% url 'core:my_orders' %}">Миний захиалга</a></li>
             {% if request.user.is_staff %}
             <li><a href="{% url 'core:panel_dashboard' %}">Самбар</a></li>
+            {% else %}
+            <li><a href="{% url 'core:my_orders' %}">Миний захиалга</a></li>
             {% endif %}
             <li><a href="{% url 'core:logout' %}">Гарах</a></li>
           </ul>

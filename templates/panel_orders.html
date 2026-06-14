@@ -5,19 +5,53 @@
 {% block topbar_title %}Захиалгууд{% endblock %}
 {% block nav_orders %}active{% endblock %}
 
+{% block extra_css %}
+<style>
+  .report-filter{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:16px}
+  .report-filter .ff{display:flex;flex-direction:column;gap:4px}
+  .report-filter label{font-size:.72rem;color:rgba(232,240,233,.55);text-transform:uppercase;letter-spacing:.04em}
+  .report-filter select,.report-filter input[type=date]{
+    background:#16201a;border:1px solid rgba(126,200,80,.25);color:#e8f0e9;
+    padding:8px 12px;border-radius:8px;font-size:.85rem;font-family:inherit}
+</style>
+{% endblock %}
+
 {% block content %}
 
 <div class="page-header">
   <h1>Захиалгууд</h1>
-  <p>Нийт {{ orders|length }} захиалга</p>
+  <p>{{ start_date }} — {{ end_date }} · Нийт {{ orders|length }} захиалга</p>
 </div>
 
-<!-- Filter -->
+<!-- Date range filter -->
+<form method="get" class="report-filter">
+  <div class="ff">
+    <label>Хугацаа</label>
+    <select name="preset" id="presetSel">
+      {% for val, label in preset_labels %}
+      <option value="{{ val }}" {% if preset == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+      <option value="custom" {% if preset == 'custom' %}selected{% endif %}>Захиалгат</option>
+    </select>
+  </div>
+  <div class="ff">
+    <label>Эхлэх</label>
+    <input type="date" name="start" id="startInp" value="{{ start_date }}">
+  </div>
+  <div class="ff">
+    <label>Дуусах</label>
+    <input type="date" name="end" id="endInp" value="{{ end_date }}">
+  </div>
+  <input type="hidden" name="status" value="{{ status_filter }}">
+  <button type="submit" class="btn-p">Шүүх</button>
+</form>
+
+<!-- Status filter (preserves date range) -->
 <div class="filter-row">
-  <a href="{% url 'core:panel_orders' %}"
+  <a href="{% url 'core:panel_orders' %}?preset={{ preset }}&start={{ start_date }}&end={{ end_date }}"
      class="filter-btn {% if not status_filter %}active{% endif %}">Бүгд</a>
   {% for val, label in status_choices %}
-  <a href="{% url 'core:panel_orders' %}?status={{ val }}"
+  <a href="{% url 'core:panel_orders' %}?status={{ val }}&preset={{ preset }}&start={{ start_date }}&end={{ end_date }}"
      class="filter-btn {% if status_filter == val %}active{% endif %}">{{ label }}</a>
   {% endfor %}
 </div>
@@ -58,4 +92,22 @@
   </table>
 </div>
 
+{{ preset_json|json_script:"preset-ranges" }}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  const presetRanges = JSON.parse(document.getElementById('preset-ranges').textContent);
+  const sel = document.getElementById('presetSel');
+  const si = document.getElementById('startInp');
+  const ei = document.getElementById('endInp');
+  sel.addEventListener('change', function(){
+    const r = presetRanges[sel.value];
+    if (r){ si.value = r[0]; ei.value = r[1]; }
+  });
+  [si, ei].forEach(function(i){ i.addEventListener('change', function(){ sel.value = 'custom'; }); });
+})();
+</script>
 {% endblock %}

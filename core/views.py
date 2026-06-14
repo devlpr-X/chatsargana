@@ -513,14 +513,24 @@ def panel_dashboard(request):
 @panel_required
 def panel_orders(request):
     status_filter = request.GET.get('status', '')
+    preset, start_date, end_date, ranges = _resolve_range(request)
+
     qs = Order.objects.select_related('user').prefetch_related('items')
+    qs = qs.filter(created_at__date__gte=start_date, created_at__date__lte=end_date)
     if status_filter:
         qs = qs.filter(status=status_filter)
+
+    preset_json = {k: [v[0].isoformat(), v[1].isoformat()] for k, v in ranges.items()}
     context = {
         'orders':         qs,
         'status_filter':  status_filter,
         'status_choices': Order.STATUS_CHOICES,
         'status_colors':  Order.STATUS_COLORS,
+        'preset':         preset,
+        'preset_labels':  PRESET_LABELS,
+        'preset_json':    preset_json,
+        'start_date':     start_date.isoformat(),
+        'end_date':       end_date.isoformat(),
     }
     return render(request, 'panel_orders.html', context)
 

@@ -52,7 +52,7 @@
       <div class="orbit-ring orbit-ring-2"></div>
       <div class="center-product">
         <div class="center-glow"></div>
-        <img src="https://pub-bd946c10d19b4f0fb44fb8b3a9549a05.r2.dev/websites/chatsargana/products/product3.png" alt="Чацарганы тос" class="center-img" />
+        <img src="{{ MEDIA_URL }}products/product3.png" alt="Чацарганы тос" class="center-img" />
       </div>
       {% for product in preview_products|slice:":4" %}
         <div class="orbit-item orbit-{{ forloop.counter }}">
